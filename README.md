@@ -82,10 +82,38 @@ A single _dynamic_ fluid simulation with interDyMFoam accounting for 6DoF transf
 
 **Cost** is proportional to only the mesh accuracy and fluid discretisation plus the extra cost in running interDyMFoam over interFoam. (This is likely lower than the Hybrid method for high fluid flows)
 
-**Numerical Stability** is inherently more unstable compared to the static method, and also risks oscillations or total collapse in the righting moment. Requires even more careful setting of hyperparameters.
+**Numerical Stability** is inherently more unstable compared to the static method, and also risks oscillations or total collapse in the righting moment. In particular, stability will be much worse for greater heel angles. Requires even more careful setting of hyperparameters.
 
-## Acquisition Functions
+## Acquisition Functions and the basic Gaussian Process
+### Model
+For **constant hull parameters**, learn how the value of the compound output metric (hydrodynamicity, stability, buoyancy) varys over heel angles and fluid flows.
 
-## Contrained Bayesian Optimisation
+One way to create an acquisition function on this is to run **two GPs** modelling the hydrodynamicity and stability curves, but determine points to sample on _both_ the curves by an acquisition function on the compound metric directly. Creating an intuitive kernel for this seems difficult, but we could just throw RBF or Matern at it.
+
+### Compount Acquisition Functions
+Splitting the GP in two (on the hydrodynamicity curve and stability curve) we can get more intuitive results and design more effect acquisition functions and kernels. But there is additional complexity on deciding how to effectively balance the multiple models.
+
+Differing acquisition functions make sense for each part of the compound metric, we wish to optimise all of the following over varying heel angles and fluid flows, each of which will have a *differing acquisition function*:
+- Integral of the stability curve up to the tipping point _(force required to capsize from flat)_
+- Maximum of the stability curve _(point of diminishing stability)_
+- Positive root of the stability curve _(tipping point)_
+- Integral of the hydrodynamic foward drag weighted by small angles heel angle between up to the point of diminishing stability _(total drag over 'realistic' heel angles)_
+  
+Note that _reserve buoyancy_ is modelled as just a constant, we don't need to sample the functions.
+
+These compound acquisition functions are simply balanced in exactly the same ratios that output metric is composed of. i.e. if we care 50% about tipping point and 50% about hydrodynamicity, we would randomly sample 50% of the time from the tipping point acquisition functions and 50% of the time from the hydrodynamicity acquisition function.
+
+**TODO:** Research if this simple method has mathematical grounding. It seems unlikely as we don't take into account how sure each acquisition function is that it has already optimised its respective output. For example, suppose we have found the tipping point by exploring extreme heel angles, but have not yet found the hydrodynamicity, we would still keep on sampling extreme heel angles when this is no longer needed. 
+
+### Multi-fidelities
+We can either sample from one simulation fidelity or take into account all 4 and estimate cost and numerical stability of each fidelity for improved efficiency. The simulation cost can be estimated and iteratively refined by taking previous results and intuition about the inherent cost and stability of the simulations (noted down above). 
+
+The fidelities are **NOT** linearly related in general. But, for some given fluid flow, a linear relationship should hold. So the join-Gaussian property will be preserved for specified fluid flows. Equally, small variations in fluid flow, especially for calm fluids should be roughly linearly related.
+
+## Contrained Bayesian Optimisation of the Gaussian Process
+Optimise the hull parameters to maximise the integral of the output metric over varying fluid flows. The fluid flows to consider could just be determined by the user (i.e. a 'calm' scenario vs a 'white water rafting' scenario)
+
+**TODO**
 
 ## (Optional) Sensitivity Analysis
+**TODO** Probably not worth doing...
