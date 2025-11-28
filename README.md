@@ -34,7 +34,12 @@ All work from a **mesh** approximation of the hull, with reserve buoyancy calcul
 The hybrid and dynamic approaches are theoretically both as _accurate / high fidelity_ as each other, but differ greatly in terms of numerical stability and cost. The acquisition functions are balanced taking to samples from multiple fidelities with based on expected cost and numerical stability.
 
 ### Analytic
-1) Ignores fluid flow and calculates draught, reserve buoyancy, and righting modment for a given heel angle based on the geometry of the hull.
+Ignores fluid flow and calculates:
+- Hull mass
+- Hull moments of inertia
+- Hull Draught
+- Reserve Buoyancy
+- Righting modment for a given heel angle based on the hull geometry.
 
 **Fidelity** is low due to non-account of fluid flow. But, still is a good baseline/sanity check, being the most accurate, stable, and efficient for low fluid flows.
 
