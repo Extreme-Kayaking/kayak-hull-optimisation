@@ -77,8 +77,9 @@ class Hull:
     Calculate the centre of buoyancy for a given draught level.
     i.e. The centre of mass of the submerged portion.
     """
-    return (0, 0, 0) # TODO
-
+    submerged = trimesh.intersections.slice_mesh_plane(mesh, [0,0,-1], [0,0,draught])
+    return vec3d_to_tuple(submerged.center_mass)
+    
   def save_to_stl(self, filepath: str) -> None:
     if self.mesh is None:
       raise ValueError("Mesh not generated.")
