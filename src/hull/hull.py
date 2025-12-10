@@ -6,22 +6,22 @@ Including mesh and all info required for simulation
 from trimesh import Trimesh
 import trimesh
 from params import Params
-from typing import Tuple, Any
+from typing import Tuple, Any, Optional
 import numpy as np
 
 def vec3d_to_tuple(vec: np.ndarray[Any, np.dtype[np.float64]]) -> Tuple[float, float, float]:
   return (vec[0], vec[1], vec[2])
 
 class Hull:
-  def __init__(self, params: Params, from_mesh:=None) -> None:
+  def __init__(self, params: Params, from_mesh: Optional[Trimesh] = None) -> None:
     """
     params: dict: "density" ...
+    from_mesh: Generate from specified trimesh instead
     """
     # Set unmodified params
     self.density: float = params.density
     
     # Generate Mesh
-
     if from_mesh is None:
       self.mesh: Trimesh = Hull.generate_mesh(params)
     else:
@@ -34,6 +34,10 @@ class Hull:
     # Calculate mesh properties
     self.recalculate_properties()
 
+  @classmethod
+  def from_mesh(cls, mesh: Trimesh):
+    return cls(Params(density=mesh.density), from_mesh=mesh)
+    
   def recalculate_properties(self) -> None:
     """
     Recalculate properties derived from the mesh (bounds, weight, centre of mass, draught, etc.)
@@ -79,10 +83,9 @@ class Hull:
       raise ValueError("Mesh not generated.")
     self.mesh.export(filepath)
     
-    
-  def load_from_stl(self, filepath: str) -> None:
+  @classmethod
+  def load_from_stl(cls, filepath: str):
     loaded = trimesh.load(filepath)
     if not isinstance(loaded, trimesh.Trimesh):
       raise ValueError("Loaded STL did not contain a valid mesh.")
-    self.mesh = loaded
-    self.recalculate_properties()
+    return Hull.from_mesh(loaded)
