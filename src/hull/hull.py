@@ -20,6 +20,7 @@ class Hull:
     """
     # Set unmodified params
     self.density: float = params.density
+    self.heel: float = params.heel
     
     # Generate Mesh
     if from_mesh is None:
@@ -36,7 +37,7 @@ class Hull:
 
   @classmethod
   def from_mesh(cls, mesh: Trimesh):
-    return cls(Params(density=mesh.density), from_mesh=mesh)
+    return cls(Params(density=mesh.density, heel=0), from_mesh=mesh)
     
   def recalculate_properties(self) -> None:
     """
