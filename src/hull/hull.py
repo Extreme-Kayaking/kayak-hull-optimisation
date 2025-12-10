@@ -90,3 +90,15 @@ class Hull:
     if not isinstance(loaded, trimesh.Trimesh):
       raise ValueError("Loaded STL did not contain a valid mesh.")
     return Hull.from_mesh(loaded)
+
+  def show_mesh(self) -> None:
+    if self.mesh is None:
+      raise ValueError("Mesh not generated")
+    trimesh.Scene(self.mesh).show(viewer="gl")
+
+  def show(self):
+    if self.mesh is None:
+      raise ValueError("Mesh not generated")
+    T = np.linalg.inv(trimesh.geometry.plane_transform(origin=[0,0,1], normal=[0,0,1]))
+    trimesh.Scene([self.mesh, trimesh.path.path.creation.grid(side=2, transform=T)]).show()
+    
