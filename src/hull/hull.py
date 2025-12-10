@@ -13,7 +13,7 @@ def vec3d_to_tuple(vec: np.ndarray[Any, np.dtype[np.float64]]) -> Tuple[float, f
   return (vec[0], vec[1], vec[2])
 
 class Hull:
-  def __init__(self, params: Params) -> None:
+  def __init__(self, params: Params, from_mesh:=None) -> None:
     """
     params: dict: "density" ...
     """
@@ -21,11 +21,23 @@ class Hull:
     self.density: float = params.density
     
     # Generate Mesh
-    self.mesh: Trimesh = Hull.generate_mesh(params)
+
+    if from_mesh is None:
+      self.mesh: Trimesh = Hull.generate_mesh(params)
+    else:
+      self.mesh = from_mesh
+      self.mesh.density = params.density # Override mesh density with params density
     if self.mesh.is_watertight:
-      raise RuntimeError("Generated Hull contains Holes")
+      # We must have a watertight hull mesh
+      raise RuntimeError("Generated/Provided Hull contains Holes")
 
     # Calculate mesh properties
+    self.recalculate_properties()
+
+  def recalculate_properties(self) -> None:
+    """
+    Recalculate properties derived from the mesh (bounds, weight, centre of mass, draught, etc.)
+    """
     self.width: float = self.mesh.bounds[0]
     self.length: float = self.mesh.bounds[1]
     self.height: float = self.mesh.bounds[2]
@@ -41,7 +53,7 @@ class Hull:
     # Draught and buoyancy
     self.draught = Hull.iterate_draught(self.mesh)
     self.centre_of_buoyancy = Hull.calculate_centre_of_buoyancy(self.mesh, self.draught)
-
+        
   @staticmethod
   def generate_mesh(params: Params) -> Trimesh:
     return Trimesh() # TODO
@@ -73,4 +85,4 @@ class Hull:
     if not isinstance(loaded, trimesh.Trimesh):
       raise ValueError("Loaded STL did not contain a valid mesh.")
     self.mesh = loaded
-    # TODO recalculate_properties
+    self.recalculate_properties()
