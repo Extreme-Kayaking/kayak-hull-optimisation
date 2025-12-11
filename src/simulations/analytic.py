@@ -22,15 +22,19 @@ def _iterate_draught(mesh: Trimesh) -> Tuple[int, float]:
   diff = float("inf")
   draught = mesh.center_mass[2]
   loops = 0
+  print("mass: {}".format(mesh.mass))
   while abs(diff) > config.hyperparameters.buoyancy_threshold:
     loops += 1
     if loops > config.hyperparameters.buoyancy_max_iterations:
       raise RuntimeError("Analytic draught calculation failed to converge")
     submerged = trimesh.intersections.slice_mesh_plane(mesh, [0,0,-1], [0,0,draught], cap=True)
-    # TODO: Count air into displacement
+    # TODO: Count air into displacement. temporarily double displacement to account for this
     displacement = submerged.volume * config.constants.water_density
-    diff = mesh.mass - displacement
-    draught += abs(diff) / mesh.mass * (mesh.bounds[2][1 if draught > 0 else 0] - draught)
+    fake_displacement = 2 * displacement
+    print("draught: {}".format(draught))
+    print("com: {}".format(fake_displacement))
+    diff = mesh.mass - fake_displacement
+    draught += abs(diff) / mesh.mass * (mesh.bounds[1 if diff> 0 else 0][2] - draught)
   return loops, draught
 
 def _calculate_centre_of_buoyancy(mesh: Trimesh, draught: float) -> Tuple[float, float, float]:
@@ -40,7 +44,7 @@ def _calculate_centre_of_buoyancy(mesh: Trimesh, draught: float) -> Tuple[float,
   """
   submerged = trimesh.intersections.slice_mesh_plane(mesh, [0,0,-1], [0,0,draught], cap=True)
   # TODO: Count air into displacement
-  return submerged.center_mas
+  return submerged.center_mass
 
 def _calculate_righting_moment(mesh: Trimesh, draught: float) -> float:
   cob = _calculate_centre_of_buoyancy(mesh, draught)
@@ -55,14 +59,17 @@ def _draught_proportion(mesh: Trimesh, draught: float):
   return unsubmerged.volume / (unsubmerged.volume + submerged.volume)
 
 def _scene_draught(mesh: Trimesh, draught: float) -> Scene:
-  T = np.linalg.inv(trimesh.geometry.plane_transform(origin=[0,0,1], normal=[0,0,1]))
-  return trimesh.Scene([mesh, trimesh.path.path.creation.grid(side=2, transform=T)])
+  T = np.linalg.inv(trimesh.geometry.plane_transform(origin=[0,0,draught], normal=[0,0,1]))
+  axes = trimesh.creation.axis(origin_size=0.1, axis_length=0.5)
+  return trimesh.Scene([mesh, axes, trimesh.path.path.creation.grid(side=2, transform=T)])
 
 def run(hull: Hull, params: Params) -> Result:
   R = trimesh.transformations.rotation_matrix(params.heel, [1,0,0], hull.mesh.center_mass)
-  rotated_mesh = hull.mesh.apply_transform(R)
+  rotated_mesh = hull.mesh.copy().apply_transform(R)
   iterations, draught = _iterate_draught(rotated_mesh)
   return Result(righting_moment = _calculate_righting_moment(rotated_mesh, draught),
                 draught_proportion = _draught_proportion(rotated_mesh, draught),
                 scene = _scene_draught(rotated_mesh, draught),
                 cost = config.hyperparameters.cost_analytic(iterations))
+
+__all__ = [ "run" ]
