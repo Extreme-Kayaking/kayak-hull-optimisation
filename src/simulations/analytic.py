@@ -44,14 +44,8 @@ def recalculate_properties(hull: Hull) -> None:
   """
   Recalculate properties derived from the mesh (bounds, weight, centre of mass, draught, etc.)
   """
-  mass: float = hull.mesh.mass
-  centre_of_mass: Tuple[float, float, float] = _vec3d_to_tuple(hull.mesh.center_mass)
-  moments_of_inertia = hull.mesh.mass_properties.inertia
-  i_xx = _vec3d_to_tuple(moments_of_inertia[0])
-  i_yy = _vec3d_to_tuple(moments_of_inertia[1])
-  i_zz = _vec3d_to_tuple(moments_of_inertia[2])
   # Draught and buoyancy
-  draught = iterate_draught(hull)
+  iterations, draught = iterate_draught(hull)
   centre_of_buoyancy = calculate_centre_of_buoyancy(hull, draught)
 
 def show_draught(hull: Hull, draught: float):

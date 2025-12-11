@@ -32,6 +32,9 @@ class Hull:
       # We must have a watertight hull mesh
       raise RuntimeError("Generated/Provided Hull contains Holes")
 
+    # Set derived params
+    self.mass = self.mesh.mass
+    
   @classmethod
   def from_mesh(cls, mesh: Trimesh):
     return cls(Params(density=mesh.density), from_mesh=mesh)
