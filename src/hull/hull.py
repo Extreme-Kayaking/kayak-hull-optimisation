@@ -27,7 +27,7 @@ class Hull:
     else:
       self.mesh = from_mesh
       self.mesh.density = params.density # Override mesh density with params density
-    if self.mesh.is_watertight:
+    if not self.mesh.is_watertight:
       # We must have a watertight hull mesh
       raise RuntimeError("Generated/Provided Hull contains Holes")
 
