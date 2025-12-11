@@ -21,7 +21,7 @@ def calculate_centre_of_buoyancy(hull: Hull, draught: float) -> Tuple[float, flo
   # TODO: Count air into displacement
   return _vec3d_to_tuple(submerged.center_mass)
 
-def iterate_draught(hull: Hull, max_iterations: int) -> float:
+def iterate_draught(hull: Hull) -> (int, float):
   """
   Iterate various water levels (draught) and calculate displacement.
   Returns the draught iterating until displacement = weight
@@ -31,13 +31,14 @@ def iterate_draught(hull: Hull, max_iterations: int) -> float:
   loops = 0
   while abs(diff) > config.hyperparameters.buoyancy_threshold:
     loops += 1
-    if loops > max_iterations: break
+    if loops > config.hyperparameters.buoyancy_max_iterations:
+      raise RuntimeError("Analytic draught calculation failed to converge")
     submerged = trimesh.intersections.slice_mesh_plane(hull.mesh, [0,0,-1], [0,0,draught])
     # TODO: Count air into displacement
     displacement = submerged.volume * config.constants.water_density
     diff = hull.mesh.mass - displacement
     draught += abs(diff) / hull.mesh.mass * (hull.mesh.bounds[2][1 if draught > 0 else 0] - draught)
-  return draught
+  return loops, draught
 
 def recalculate_properties(hull: Hull) -> None:
   """
