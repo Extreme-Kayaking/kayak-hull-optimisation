@@ -22,7 +22,6 @@ def _iterate_draught(mesh: Trimesh) -> Tuple[int, float]:
   diff = float("inf")
   draught = mesh.center_mass[2]
   loops = 0
-  print("mass: {}".format(mesh.mass))
   while abs(diff) > config.hyperparameters.buoyancy_threshold:
     loops += 1
     if loops > config.hyperparameters.buoyancy_max_iterations:
@@ -31,8 +30,6 @@ def _iterate_draught(mesh: Trimesh) -> Tuple[int, float]:
     # TODO: Count air into displacement. temporarily double displacement to account for this
     displacement = submerged.volume * config.constants.water_density
     fake_displacement = 2 * displacement
-    print("draught: {}".format(draught))
-    print("com: {}".format(fake_displacement))
     diff = mesh.mass - fake_displacement
     draught += abs(diff) / mesh.mass * (mesh.bounds[1 if diff> 0 else 0][2] - draught)
   return loops, draught
