@@ -2,14 +2,14 @@
 Analytic Simulation
 """
 
-import config
-from hull.hull import Hull
+from .. import config
+from ..hull import Hull
 import numpy as np
 import trimesh
 from trimesh import Trimesh, Scene
 from typing import Tuple, Any, cast
-from simulations.params import Params
-from simulations.result import Result
+from .params import Params
+from .result import Result
 
 def _vec3d_to_tuple(vec: np.ndarray[Any, np.dtype[np.float64]]) -> Tuple[float, float, float]:
   return (vec[0], vec[1], vec[2])
