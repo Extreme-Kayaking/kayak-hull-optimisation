@@ -12,7 +12,7 @@ from typing import Tuple, Any, Optional
 def _vec3d_to_tuple(vec: np.ndarray[Any, np.dtype[np.float64]]) -> Tuple[float, float, float]:
   return (vec[0], vec[1], vec[2])
 
-def calculate_centre_of_buoyancy(hull: Hull, draught: float) -> Tuple[float, float, float]:
+def _calculate_centre_of_buoyancy(hull: Hull, draught: float) -> Tuple[float, float, float]:
   """
   Calculate the centre of buoyancy for a given draught level.
   i.e. The centre of mass of the submerged portion.
@@ -21,7 +21,7 @@ def calculate_centre_of_buoyancy(hull: Hull, draught: float) -> Tuple[float, flo
   # TODO: Count air into displacement
   return _vec3d_to_tuple(submerged.center_mass)
 
-def iterate_draught(hull: Hull) -> (int, float):
+def _iterate_draught(hull: Hull) -> Tuple[int, float]:
   """
   Iterate various water levels (draught) and calculate displacement.
   Returns the draught iterating until displacement = weight
