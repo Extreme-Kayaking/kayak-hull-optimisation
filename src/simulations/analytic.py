@@ -11,9 +11,6 @@ from typing import Tuple, Any, cast
 from .params import Params
 from .result import Result
 
-def _vec3d_to_tuple(vec: np.ndarray[Any, np.dtype[np.float64]]) -> Tuple[float, float, float]:
-  return (vec[0], vec[1], vec[2])
-
 def _iterate_draught(mesh: Trimesh) -> Tuple[int, float]:
   """
   Iterate various water levels (draught) and calculate displacement.
@@ -26,29 +23,27 @@ def _iterate_draught(mesh: Trimesh) -> Tuple[int, float]:
     loops += 1
     if loops > config.hyperparameters.buoyancy_max_iterations:
       raise RuntimeError("Analytic draught calculation failed to converge")
-    submerged = trimesh.intersections.slice_mesh_plane(mesh, [0,0,-1], [0,0,draught], cap=True)
-    # TODO: Count air into displacement. temporarily double displacement to account for this
-    displacement = submerged.volume * config.constants.water_density
+    _, displacement = _calculate_centre_buoyancy_and_displacement(mesh, draught)
     fake_displacement = 2 * displacement
     diff = mesh.mass - fake_displacement
     draught += abs(diff) / mesh.mass * (mesh.bounds[1 if diff> 0 else 0][2] - draught)
   return loops, draught
 
-def _calculate_centre_of_buoyancy(mesh: Trimesh, draught: float) -> Tuple[float, float, float]:
+def _calculate_centre_buoyancy_and_displacement(mesh: Trimesh, draught: float) -> Tuple[Tuple[float, float, float], float]:
   """
   Calculate the centre of buoyancy for a given draught level.
   i.e. The centre of mass of the submerged portion.
   """
   submerged = trimesh.intersections.slice_mesh_plane(mesh, [0,0,-1], [0,0,draught], cap=True)
-  # TODO: Count air into displacement
-  return submerged.center_mass
+  
+  return tuple(submerged.center_mass), submerged.volume * config.constants.water_density
 
 def _calculate_righting_moment(mesh: Trimesh, draught: float) -> Tuple[float, float, float]:
-  cob = _calculate_centre_of_buoyancy(mesh, draught)
+  cob, _ = _calculate_centre_buoyancy_and_displacement(mesh, draught)
   righting_lever = cob - mesh.center_mass
   gravity_force = mesh.mass * config.constants.gravity_on_earth * np.array([0,0,-1])
   righting_moment = np.cross(righting_lever, gravity_force)
-  return cast(Tuple[float, float, float], righting_moment)
+  return tuple(righting_moment)
 
 def _draught_proportion(mesh: Trimesh, draught: float):
   submerged = trimesh.intersections.slice_mesh_plane(mesh, [0,0,-1], [0,0,draught], cap=True)
