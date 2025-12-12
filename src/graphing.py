@@ -20,7 +20,7 @@ def plot_RM(xs, ys):
     plt.legend()
     plt.show()
 
-def plot_simulation(run, hull, lower = -np.pi, upper = np.pi, resolution = 50):
+def plot_simulation(run, hull, lower = -np.pi, upper = np.pi, resolution = 100):
     """
     run: simulation runner
     lower: heel angle (rads) lower bound
