@@ -27,6 +27,7 @@ def _iterate_draught(mesh: Trimesh) -> Tuple[int, float]:
   draught, draught_result = optimize.bisect(required_buoyancy,
                                   upper,
                                   lower,
+                                  # TODO, parameterise draught_threshold based on hull?
                                   xtol=config.hyperparameters.draught_threshold * (upper-lower),
                                   maxiter=config.hyperparameters.draught_max_iterations,
                                   disp=True,

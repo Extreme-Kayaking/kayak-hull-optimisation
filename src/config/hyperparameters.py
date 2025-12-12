@@ -3,7 +3,7 @@ Values/functions of hyperparameters
 """
 import numpy as np
 # Analytic Simulator
-draught_threshold: float = 0.001  # 0.1% accuracy in draught level
+draught_threshold: float = 0.0001  # 99.99% accuracy in draught level
 draught_max_iterations: int = 100
 
 # Simulation cost weightings & functions
