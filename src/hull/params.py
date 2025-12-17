@@ -24,3 +24,4 @@ class Params:
     rocker_bow: float
     rocker_stern: float
     section_shape_exponent: float
+    
