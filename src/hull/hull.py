@@ -20,6 +20,8 @@ class Hull:
     """
     # Set unmodified params
     self.density: float = params.density
+    self.person_mass: float = params.person_mass
+    self.hull_thickness: float = params.hull_thickness
     
     # Generate Mesh
     if from_mesh is None:

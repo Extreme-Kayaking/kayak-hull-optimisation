@@ -10,9 +10,9 @@ class Params:
 
     length - m (float): overall hull length
     beam - m (float): max width of hull
-    depth - m (float): max depth of hull below waterline at midship
+    depth - m (float): max depth of hull
     
-    chine_hardness - float: controls sharpness of hull cross-section (0.0=round, 1.0=sharp)
+    cross_section_exponent - float: super-ellipse exponent controlling cross-section shape
     
     rocker_bow - m (float): keel curvature at bow
     rocker_stern - m (float): keel curvature at stern
@@ -30,7 +30,7 @@ class Params:
     depth: float
 
     # cross-section shape
-    chine_hardness: float
+    cross_section_exponent: float
 
     # longitudinal profile
     rocker_bow: float
