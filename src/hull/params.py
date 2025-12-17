@@ -10,18 +10,29 @@ class Params:
 
     length - m (float): overall hull length
     beam - m (float): max width of hull
-    draft - m (float): max depth of hull below waterline at midship
+    depth - m (float): max depth of hull below waterline at midship
+    
+    chine_hardness - float: controls sharpness of hull cross-section (0.0=round, 1.0=sharp)
+    
     rocker_bow - m (float): keel curvature at bow
     rocker_stern - m (float): keel curvature at stern
-    section_shape_exponent - float: exponent controlling hull cross-section shape (sharpness)
+    rocker_position - float: position of minimum rocker along hull length (0.0=bow, 1.0=stern)
     """
-    density: float
 
-    # Hull geometry parameters
+    # Physical properties
+    density: float
+    person_mass: float
+    hull_thickness: float
+
+    # global dimensions
     length: float
     beam: float
-    draft: float
+    depth: float
+
+    # cross-section shape
+    chine_hardness: float
+
+    # longitudinal profile
     rocker_bow: float
     rocker_stern: float
-    section_shape_exponent: float
-    
+    rocker_position: float
