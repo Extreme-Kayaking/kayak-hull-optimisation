@@ -9,6 +9,7 @@ import trimesh
 from .params import Params
 from .generation import generate_simple_hull, apply_rocker_to_hull
 from typing import Optional
+from .constraints import Constraints
 
 class Hull:
   """
@@ -22,6 +23,7 @@ class Hull:
     # Set unmodified params
     self.density: float = params.density
     self.hull_thickness: float = params.hull_thickness
+    self.params: Params = params
     
     if from_mesh is None:
       self.mesh: Trimesh = Hull.generate_mesh(params)
@@ -41,6 +43,9 @@ class Hull:
     if not self.mesh.is_watertight:
       # We must have a watertight hull mesh
       raise RuntimeError("Generated/Provided Hull contains Holes")
+    
+    # Check constraints
+    Constraints().check_hull(self)
     
   @classmethod
   def from_mesh(cls, mesh: Trimesh):
