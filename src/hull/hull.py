@@ -53,7 +53,8 @@ class Hull:
       length=params.length,
       beam=params.beam,
       depth=params.depth,
-      cross_section_exponent=params.cross_section_exponent
+      cross_section_exponent=params.cross_section_exponent,
+      beam_position=params.beam_position
     )
 
     # Apply rocker deformation

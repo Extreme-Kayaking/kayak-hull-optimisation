@@ -17,7 +17,7 @@ def super_ellipse(angle: float, width: float, height: float, n: float) -> Tuple[
     z_raw = np.sign(s) * (np.abs(s) ** (2 / n))
     return x_raw * width, z_raw * height
 
-def generate_simple_hull(length: float, beam: float, depth: float, cross_section_exponent: float, N_STATIONS: int=60, N_POINTS: int=32) -> Trimesh:
+def generate_simple_hull(length: float, beam: float, depth: float, cross_section_exponent: float, beam_position: float, N_STATIONS: int=60, N_POINTS: int=32) -> Trimesh:
     """
     Generate a simple  mesh (with no rocker) based on global dimensions and cross-section shape of the hull
     """
@@ -26,13 +26,19 @@ def generate_simple_hull(length: float, beam: float, depth: float, cross_section
     faces = []
 
     # setting up intial structure
-    stat_vals = np.linspace(0, 1.0, N_STATIONS) # normalized points along the hull overall length (easily scale it later)
+    stat_vals = np.linspace(0, 1.0, N_STATIONS) # normalized points along the hull overall length, so that it can be easily scaled later
     angle_vals = np.linspace(0, 2 * np.pi, N_POINTS, endpoint=False)  
 
     # Generate vertices
     for stat in stat_vals:
         x_pos = length * stat
-        width_taper_factor = np.sin(np.pi * stat)  # simple tapering function 0 at bow/stern, 1 at midship
+
+        if stat <= beam_position:
+            # bow half of hull goes from 0 at bow to 1 at max_beam_position
+            width_taper_factor = np.sin((stat / beam_position) * (np.pi / 2.0))
+        else:
+            # stern half of hull goes from 1 at max_beam_position to 0 at stern
+            width_taper_factor = np.sin(((stat - beam_position) / (1.0 - beam_position)) * (np.pi / 2.0) + (np.pi / 2.0))
 
         curr_width = max(beam * width_taper_factor, 1e-4)
         curr_depth = max(depth * width_taper_factor, 1e-4)
@@ -45,7 +51,7 @@ def generate_simple_hull(length: float, beam: float, depth: float, cross_section
             else:
                 # top half of hull
                 y_pos, z_raw = super_ellipse(angle, curr_width / 2.0, curr_depth, n=2.0)
-                z_pos = np.abs(z_raw) * 0.3  # upper half is shallower to create a deck
+                z_pos = np.abs(z_raw) * 0.2  # upper half is shallower to create a deck
             
             vertices.append([x_pos, y_pos, z_pos])
 
