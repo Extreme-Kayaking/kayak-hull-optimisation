@@ -39,15 +39,15 @@ def plot_RM(xs, ys):
     plt.savefig("righting_moments.png")
     plt.show()
 
-def plot_simulation(run, hull, lower = -np.pi, upper = np.pi, resolution = 100):
+def plot_simulation(simulation, hull, lower = -np.pi, upper = np.pi, resolution = 100):
     """
-    run: simulation runner
+    simulation: simulation (simulation.analytic, simulation.static, etc.)
     lower: heel angle (rads) lower bound
     upper: heel angle (rads) upper bound
     resolution: number of samples
     """
     heel_angles = np.linspace(lower, upper, resolution)
-    results = [run(hull, simulations.Params(heel=heel)) for heel in heel_angles]
+    results = [simulation.run(hull, simulations.Params(heel=heel)) for heel in heel_angles]
     plot_RM(heel_angles, results)
 
 
