@@ -1,1 +1,5 @@
 *.pyc
+
+# Temporarily unilaterally ignore all artefacts
+*.pkl
+*.png
