@@ -45,7 +45,7 @@ def _calculate_centre_buoyancy_and_displacement(mesh: Trimesh, draught: float) -
   i.e. The centre of mass of the water displaced by the submerged portion and its air pockets.
   """
   submerged = trimesh.intersections.slice_mesh_plane(mesh, [0,0,-1], [0,0,draught], cap=True)
-  water_box = trimesh.creation.box(bounds=[submerged.bounds[0]-0.1, submerged.bounds[1]+[0.1,0.1,0]])
+  water_box = trimesh.creation.box(bounds=[submerged.bounds[0] * 0.9, submerged.bounds[1] * [1.1,1.1,1]])
   # Calculate water/air meshes around the boat
   water_diff: Trimesh = trimesh.boolean.difference([water_box, mesh])
   pockets = water_diff.split()  # Get all pockets
@@ -70,7 +70,7 @@ def _draught_proportion(mesh: Trimesh, draught: float):
 
 def _scene_draught(mesh: Trimesh, draught: float) -> Scene:
   submerged = trimesh.intersections.slice_mesh_plane(mesh, [0,0,-1], [0,0,draught], cap=True)
-  water_box = trimesh.creation.box(bounds=[submerged.bounds[0]+0.1, submerged.bounds[1]+[0.1,0.1,0]])
+  water_box = trimesh.creation.box(bounds=[submerged.bounds[0]*0.9, submerged.bounds[1]*[1.1,1.1,1]])
   water_box._visual.face_colors = [0,255,240,50]
   mesh._visual.face_colors = [255,0,0,255]
   return trimesh.Scene([mesh, water_box])
