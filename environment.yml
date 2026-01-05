@@ -23,3 +23,6 @@ dependencies:
     - networkx
     - "pyglet<2"
     - matplotlib
+
+variables:
+  PYTHONPATH: ./
