@@ -28,6 +28,7 @@ class ResultStorage:
                     except pickle.UnpicklingError:
                         print(f"Warning: Corrupt data found in {self.filepath}")
                         break
+                    
         return data
 
     def _append_to_file(self, key: Tuple, value: Any):
@@ -35,12 +36,18 @@ class ResultStorage:
         Appends a SINGLE entry to the end of the file.
         This is instant (O(1)), regardless of file size.
         """
+        assert type(key) is tuple, "Key must be a tuple"
+
         with open(self.filepath, "ab") as f:  
+
             pickle.dump((key, value), f)
 
+
+
+
     def store(self, result_obj: 'Result', params: Any):
+
         res_dict = result_obj.to_dict()
-        
 
         if hasattr(params, '__dataclass_fields__'):
             param_dict = asdict(params)
@@ -60,3 +67,4 @@ class ResultStorage:
 
         self.data[key_tuple] = target_val
         self._append_to_file(key_tuple, target_val)
+        print(f"Stored result for params: {param_dict}")
