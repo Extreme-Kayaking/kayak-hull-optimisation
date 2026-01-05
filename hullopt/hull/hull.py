@@ -14,22 +14,20 @@ class Hull:
   """
   def __init__(self, params: Optional[Params], from_mesh: Optional[Trimesh] = None) -> None:
     """
-    params: dict: "density" ...
+    params: Generate hull from params (density, etc.)
     from_mesh: Generate from specified trimesh instead
     """
-    if not params:
-      self.density = from_mesh.density
-    else:
-      # Set unmodified params
-      self.density: float = params.density
-    density = self.density
-    
-    # Generate Mesh
-    if from_mesh is None:
-      self.mesh: Trimesh = Hull.generate_mesh(params)
-    else:
-      self.mesh = from_mesh
-   
+    match (params, from_mesh):
+      case None, None:
+        raise ValueError("Must specify hull params or mesh")
+      case None, mesh:
+        self.density = mesh.density
+        self.mesh = from_mesh   
+      case params, None:
+        # Set unmodified params
+        self.density: float = params.density
+        self.mesh: Trimesh = Hull.generate_mesh(params)    
+
     if not self.mesh.is_watertight:
       # We must have a watertight hull mesh
       raise RuntimeError("Generated/Provided Hull contains Holes")
