@@ -54,13 +54,24 @@ class Hull:
   @staticmethod
   def generate_mesh(params: Params) -> Trimesh:
     # Generate outer hull - this represents the hull boundary for buoyancy calculations
-    mesh = generate_simple_hull(
+    outer_mesh = generate_simple_hull(
       length=params.length,
       beam=params.beam,
       depth=params.depth,
       cross_section_exponent=params.cross_section_exponent,
       beam_position=params.beam_position
     )
+
+    inner_mesh = generate_simple_hull(
+      length=params.length - 2 * params.hull_thickness,
+      beam=params.beam - 2 * params.hull_thickness,
+      depth=params.depth - 2 * params.hull_thickness,
+      cross_section_exponent=params.cross_section_exponent,
+      beam_position=params.beam_position
+    )
+
+    # Create hull shell by subtracting inner from outer
+    mesh = outer_mesh.difference(inner_mesh)
 
     # Apply rocker deformation
     mesh = apply_rocker_to_hull(

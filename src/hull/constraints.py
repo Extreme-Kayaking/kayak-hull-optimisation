@@ -54,10 +54,11 @@ class Constraints:
        f'Depth {params.depth} out of range {self.depth_range}'),
       
       (self.cross_section_exponent_range[0] <= params.cross_section_exponent <= self.cross_section_exponent_range[1], 
-       f'Cross-section exponent {params.cross_section_exponent} out of range {self.cross_section_exponent_range}')
-       ,
+       f'Cross-section exponent {params.cross_section_exponent} out of range {self.cross_section_exponent_range}'),
+
       (self.beam_position_range[0] <= params.beam_position <= self.beam_position_range[1], 
        f'Beam position {params.beam_position} out of range {self.beam_position_range}'),
+       
       (self.rocker_bow_range[0] <= params.rocker_bow <= self.rocker_bow_range[1], 
        f'Rocker bow {params.rocker_bow} out of range {self.rocker_bow_range}'),
 
