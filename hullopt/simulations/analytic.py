@@ -82,7 +82,7 @@ def _reserve_buoyancy(mesh: Trimesh, draught):
   reserve_buoyancy = -result.fun - mesh.mass
 
   unsubmerged = trimesh.intersections.slice_mesh_plane(mesh, [0,0,1], [0,0,draught], cap=True)
-  buoyancy_from_unsubmerged_hull = unsubmerged.volume * (config.constants.water_density - mesh.density)
+  buoyancy_from_unsubmerged_hull = unsubmerged.volume * config.constants.water_density
   return result.nit, reserve_buoyancy, buoyancy_from_unsubmerged_hull
 
 def _scene_draught(mesh: Trimesh, draught: float) -> Scene:
