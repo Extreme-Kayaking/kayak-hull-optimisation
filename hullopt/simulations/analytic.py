@@ -2,8 +2,8 @@
 Analytic Simulation
 """
 
-from functools import reduce
-from typing import Tuple
+from functools import reduce, partial
+from typing import Tuple, cast
 import numpy as np
 from scipy import optimize
 import trimesh
@@ -27,12 +27,13 @@ def _iterate_draught(mesh: Trimesh) -> Tuple[int, float]:
     _, displacement = _calculate_centre_buoyancy_and_displacement(mesh, draught)
     return mesh.mass - displacement
 
-  lower = mesh.bounds[0][2] + 0.001 # 1mm buffer
+  lower = mesh.bounds[0][2] + 0.001 # 1mm buffer. TODO: switch to be in terms of draught_threshold
   upper = mesh.bounds[1][2] - 0.001
   draught, draught_result = optimize.bisect(required_buoyancy,
                                   upper,
                                   lower,
                                   # TODO, parameterise draught_threshold based on hull?
+                                  # TODO, xtol in terms of absolute mesh bounds (unadjusted)
                                   xtol=config.hyperparameters.draught_threshold * (upper-lower),
                                   maxiter=config.hyperparameters.draught_max_iterations,
                                   disp=True,
@@ -63,10 +64,23 @@ def _calculate_righting_moment(mesh: Trimesh, draught: float) -> Tuple[float, fl
   righting_moment = np.cross(righting_lever, gravity_force)
   return tuple(righting_moment)
 
-def _draught_proportion(mesh: Trimesh, draught: float):
-  submerged = trimesh.intersections.slice_mesh_plane(mesh, [0,0,-1], [0,0,draught], cap=True)
-  unsubmerged = trimesh.intersections.slice_mesh_plane(mesh, [0,0,1], [0,0,draught], cap=True)
-  return unsubmerged.volume / (unsubmerged.volume + submerged.volume)
+def compose(f, g):
+    return lambda *a, **kw: f(g(*a, **kw))
+
+def _reserve_buoyancy(mesh: Trimesh, draught):
+  lower = draught + 0.001 # 1mm buffer
+  upper = mesh.bounds[1][2] - 0.001
+  result = cast(optimize.OptimizeResult,
+                optimize.minimize_scalar(compose(
+                  lambda t: -t[1],
+                  partial(_calculate_centre_buoyancy_and_displacement, mesh)),
+                  bounds=(lower, upper),
+                  # TODO, parameterise draught_threshold based on hull?
+                  options= {
+                    'maxiter': config.hyperparameters.draught_max_iterations,
+                    'xatol': config.hyperparameters.draught_threshold * (upper-lower),
+                  }))
+  return result.nit, -result.fun - mesh.mass
 
 def _scene_draught(mesh: Trimesh, draught: float) -> Scene:
   submerged = trimesh.intersections.slice_mesh_plane(mesh, [0,0,-1], [0,0,draught], cap=True)
@@ -85,12 +99,13 @@ def run(hull: Hull, params: Params, use_cache: bool = True) -> Result:
   mesh = hull.mesh.copy().apply_transform(T)
   R = trimesh.transformations.rotation_matrix(params.heel, [1,0,0], hull.mesh.center_mass)
   mesh.apply_transform(R)
-  iterations, draught = _iterate_draught(mesh)
+  iterations_draught, draught = _iterate_draught(mesh)
+  iterations_reserve_buoyancy, reserve_buoyancy = _reserve_buoyancy(mesh, draught)
   new_result = Result(
         righting_moment=_calculate_righting_moment(mesh, draught),
-        draught_proportion=_draught_proportion(mesh, draught),
+        reserve_buoyancy=reserve_buoyancy,
         scene=_scene_draught(mesh, draught),
-        cost=config.hyperparameters.cost_analytic(iterations)
+        cost=config.hyperparameters.cost_analytic(iterations_draught + iterations_reserve_buoyancy)
     )
   if use_cache:
         storage.store(new_result, params)
