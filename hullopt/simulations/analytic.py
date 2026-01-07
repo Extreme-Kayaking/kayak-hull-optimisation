@@ -108,6 +108,7 @@ def run(hull: Hull, params: Params, use_cache: bool = True) -> Result:
         righting_moment=_calculate_righting_moment(mesh, draught),
         reserve_buoyancy=reserve_buoyancy,
         reserve_buoyancy_hull=reserve_buoyancy_hull,
+        draught=draught,
         scene=_scene_draught(mesh, draught),
         cost=config.hyperparameters.cost_analytic(iterations_draught + iterations_reserve_buoyancy)
     )

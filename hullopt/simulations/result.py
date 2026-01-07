@@ -13,12 +13,15 @@ class Result:
     reserve_buoyancy_hull - kg (float): the reserve buoyancy that the unsubmerged portion of hull contributes (i.e. excluding air pockets within the hull)
     scene - Trimesh.Scene: scene containing the tilted hull & waterline for viewing with scene.show()
     cost - float: Simulation cost (accounting for # of iterations, and discretisation). Note: does not account for (hardware-dependent) time taken to complete
+    
+    draught - m (float): draught where the hull sits naturally. Note: units are m relative to centre of mass of the hull
     """
 
 
     righting_moment: Tuple[float, float, float]
     reserve_buoyancy: float
     reserve_buoyancy_hull: float
+    draught: float
     scene: Scene
     cost: float
 
