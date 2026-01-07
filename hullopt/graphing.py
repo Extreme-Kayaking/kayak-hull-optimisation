@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from functools import partial
+import mpl_axes_aligner
 
 from hullopt import simulations
 
@@ -45,7 +46,10 @@ def plot_heels(ps, rs):
     ax2.plot(xs, bs, linestyle="--", color='grey', label="Reserve buoyancy")
 
     ax2.set_ylabel("Reserve buoyancy (kg)")
-            
+
+    # Align x-axes in center of figure
+    mpl_axes_aligner.align.yaxes(ax1, 0, ax2, 0, 0.5)
+    
     fig.legend()
     plt.savefig("righting_moments.png")
     plt.show()
