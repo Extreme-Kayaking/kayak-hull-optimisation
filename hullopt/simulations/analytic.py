@@ -70,7 +70,7 @@ def _draught_proportion(mesh: Trimesh, draught: float):
 
 def _scene_draught(mesh: Trimesh, draught: float) -> Scene:
   submerged = trimesh.intersections.slice_mesh_plane(mesh, [0,0,-1], [0,0,draught], cap=True)
-  water_box = trimesh.creation.box(bounds=[submerged.bounds[0] * 1.1, submerged.bounds[1] * [1.1,1.1,0]])
+  water_box = trimesh.creation.box(bounds=[submerged.bounds[0] * 1.1, submerged.bounds[1] * [1.1,1.1,1]])
   water_diff: Trimesh = trimesh.boolean.difference([water_box, mesh])
   pockets = water_diff.split()  # Get all pockets
   # Exactly ONE pocket corresponds to water, and it is the only pocket to contain points outside the submerged points
