@@ -44,6 +44,7 @@ def _calculate_centre_buoyancy_and_displacement(mesh: Trimesh, draught: float) -
   Calculate the centre of buoyancy for a given draught level.
   i.e. The centre of mass of the water displaced by the submerged portion and its air pockets.
   """
+  draught = np.asarray(draught).item() # Basin hopping sometimes converts draught to [draught] for some reason
   submerged = trimesh.intersections.slice_mesh_plane(mesh, [0,0,-1], [0,0,draught], cap=True)
   water_box = trimesh.creation.box(bounds=[submerged.bounds[0] * 1.1, submerged.bounds[1] * [1.1,1.1,1]])
   # Calculate water/air meshes around the boat
@@ -67,18 +68,25 @@ def compose(f, g):
     return lambda *a, **kw: f(g(*a, **kw))
 
 def _reserve_buoyancy(mesh: Trimesh, draught):
-  lower = draught + 0.001 # 1mm buffer
+  lower = draught
   upper = mesh.bounds[1][2] - 0.001
+  # TODO: Basin hopping is overkill for this system with 2 simple minima for most hull shapes
+  #       But in general, for very complex hull shapes we may need this
   result = cast(optimize.OptimizeResult,
-                optimize.minimize_scalar(compose(
+                optimize.basinhopping(compose(
                   lambda t: -t[1],
                   partial(_calculate_centre_buoyancy_and_displacement, mesh)),
-                  bounds=(lower, upper),
-                  # TODO, parameterise draught_threshold based on hull?
-                  options= {
-                    'maxiter': config.hyperparameters.draught_max_iterations,
-                    'xatol': config.hyperparameters.draught_threshold * (upper-lower+0.002),
-                  }))
+                  draught,
+                  niter=20, # Todo parameterise?
+                  stepsize=(upper-lower)*0.1,
+                  minimizer_kwargs = {
+                    #'bounds': (lower, upper),
+                     # TODO, parameterise draught_threshold based on hull?
+                    'tol': config.hyperparameters.draught_threshold * (upper-lower+0.002),
+                    'options': {
+                      'maxiter': config.hyperparameters.draught_max_iterations,
+                    }}
+                ))
   reserve_buoyancy = -result.fun - mesh.mass
 
   unsubmerged = trimesh.intersections.slice_mesh_plane(mesh, [0,0,1], [0,0,draught], cap=True)
