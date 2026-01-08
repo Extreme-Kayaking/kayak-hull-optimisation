@@ -7,7 +7,7 @@ from ..config import *
 from trimesh import Trimesh
 import trimesh
 from .params import Params
-from .generation import generate_simple_hull, apply_rocker_to_hull
+from .generation import generate_simple_hull, apply_rocker_to_hull, add_cockpit_to_hull
 from typing import Optional
 from .constraints import Constraints
 
@@ -32,13 +32,8 @@ class Hull:
       self.mesh.density = params.density # Override mesh density with params density
     
     # Set derived properties
-    self.mass = self.mesh.area * self.hull_thickness * self.density
-    # Override mesh density so mesh.mass = volume * density equals our shell mass
-    self.mesh.density = self.mass / self.mesh.volume
-
-    # override center of mass to mimic as an empty hollow hull
-    min_z = self.mesh.bounds[0][2]
-    self.mesh.center_mass = [0.0, 0.0, min_z + (params.depth * 0.25)]
+    self.mesh.density = self.density
+    self.mass = self.mesh.volume * self.density
 
     if not self.mesh.is_watertight:
       # We must have a watertight hull mesh
@@ -53,7 +48,7 @@ class Hull:
         
   @staticmethod
   def generate_mesh(params: Params) -> Trimesh:
-    # Generate outer hull - this represents the hull boundary for buoyancy calculations
+    # Generate outer hull mesh
     outer_mesh = generate_simple_hull(
       length=params.length,
       beam=params.beam,
@@ -62,6 +57,7 @@ class Hull:
       beam_position=params.beam_position
     )
 
+    # Generate inner hull mesh
     inner_mesh = generate_simple_hull(
       length=params.length - 2 * params.hull_thickness,
       beam=params.beam - 2 * params.hull_thickness,
@@ -70,8 +66,11 @@ class Hull:
       beam_position=params.beam_position
     )
 
-    # Create hull shell by subtracting inner from outer
-    mesh = outer_mesh.difference(inner_mesh)
+    # Create a hollow hull shell by subtracting inner from outer
+    try:
+        mesh = outer_mesh.difference(inner_mesh, engine="manifold")
+    except Exception:
+        mesh = outer_mesh.difference(inner_mesh)
 
     # Apply rocker deformation
     mesh = apply_rocker_to_hull(
@@ -85,7 +84,16 @@ class Hull:
 
     # Center the mesh
     centroid = mesh.center_mass
-    mesh.apply_translation([-centroid[0], 0.0, 0.0])
+    mesh.apply_translation([-centroid[0], -centroid[1], 0.0])
+
+    # Add cockpit opening
+    mesh = add_cockpit_to_hull(
+      mesh,
+      length=params.length,
+      cockpit_length=params.cockpit_length,
+      cockpit_width=params.cockpit_width,
+      cockpit_position=params.cockpit_position
+    )
 
     return mesh
     

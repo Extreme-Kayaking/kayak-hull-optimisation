@@ -4,6 +4,7 @@ Mesh generation for kayak hulls based on parameter sets
 
 import numpy as np
 from trimesh import Trimesh
+import trimesh
 from typing import Tuple, Any, cast
 
 def super_ellipse(angle: float, width: float, height: float, n: float) -> Tuple[float, float]:
@@ -121,3 +122,41 @@ def apply_rocker_to_hull(mesh: Trimesh, length: float, rocker_bow: float, rocker
     mesh.fix_normals()
 
     return mesh  
+
+def add_cockpit_to_hull(mesh: Trimesh, length: float, cockpit_length: float, cockpit_width: float, cockpit_position: float) -> Trimesh:
+    """
+    Cuts a cockpit opening from the top deck of the hull
+    """
+    # Get hull bounds
+    z_top_deck = mesh.bounds[1][2]
+    
+    # Create a cutter that cuts through the closed top deck area
+    deck_height = max(z_top_deck, 0) 
+    cutter_height = deck_height + 0.05 
+    
+    cutter = trimesh.creation.cylinder(
+        radius=cockpit_width / 2.0,
+        height=cutter_height,
+        sections=128
+    )
+
+    # Scale X to make it elliptical
+    scale_x = cockpit_length / max(cockpit_width, 1e-9)
+    cutter.apply_scale([scale_x, 1.0, 1.0])
+
+    # Position the cutter around the cockpit position
+    center_x = (cockpit_position - 0.5) * length
+    center_z = deck_height / 2.0  # Centered in the deck region
+    
+    cutter.apply_translation([center_x, 0.0, center_z])
+
+    # Boolean subtract
+    try:
+        out = mesh.difference(cutter, engine="manifold")
+    except Exception:
+        out = mesh.difference(cutter)
+
+    out.fix_normals()
+    out.merge_vertices()
+
+    return out

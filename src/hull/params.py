@@ -20,6 +20,10 @@ class Params:
     rocker_stern - m (float): keel curvature at stern
     rocker_position - float: position of minimum rocker along hull length (0.0=bow, 1.0=stern)
     rocker_exponent - float: exponent controlling how banana-shaped the kayak is at each end
+
+    cockpit_length - m (float): length of cockpit opening
+    cockpit_width - m (float): width of cockpit opening
+    cockpit_position - float: position of cockpit center along hull length ~ at centre
     """
 
     # Physical properties
@@ -40,3 +44,8 @@ class Params:
     rocker_stern: float
     rocker_position: float
     rocker_exponent: float
+    
+    # cockpit opening
+    cockpit_length: float
+    cockpit_width: float
+    cockpit_position: float = 0.5
