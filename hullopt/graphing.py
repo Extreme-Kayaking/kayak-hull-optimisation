@@ -20,7 +20,9 @@ def plot_heels(ps, rs):
     xs = [p.heel for p in ps]
     
     fig, ax1 = plt.subplots(figsize=(10,5))
+    ax1.grid(True)
     ax1.set_xlabel("Heel angle (rad)")
+    ax1.set_xticks(np.arange(-np.pi, np.pi+0.01, 1/8*np.pi))
     plt.title("Righting Moments and Reserve Buoyancies for Heel Angles")
 
     # Moment curves
