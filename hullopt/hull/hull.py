@@ -59,7 +59,8 @@ class Hull:
       beam=params.beam - 2 * params.hull_thickness,
       depth=params.depth - 2 * params.hull_thickness,
       cross_section_exponent=params.cross_section_exponent,
-      beam_position=params.beam_position
+      beam_position=params.beam_position,
+      type='inner'
     )
 
     # Create a hollow hull shell by subtracting inner from outer

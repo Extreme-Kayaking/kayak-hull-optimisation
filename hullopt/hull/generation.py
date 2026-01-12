@@ -18,7 +18,7 @@ def super_ellipse(angle: float, width: float, height: float, n: float) -> Tuple[
     z_raw = np.sign(s) * (np.abs(s) ** (2 / n))
     return x_raw * width, z_raw * height
 
-def generate_simple_hull(length: float, beam: float, depth: float, cross_section_exponent: float, beam_position: float, N_STATIONS: int=60, N_POINTS: int=32) -> Trimesh:
+def generate_simple_hull(length: float, beam: float, depth: float, cross_section_exponent: float, beam_position: float, N_STATIONS: int=60, N_POINTS: int=32, type: str='outer') -> Trimesh:
     """
     Generate a simple  mesh (with no rocker) based on global dimensions and cross-section shape of the hull
     """
@@ -52,7 +52,7 @@ def generate_simple_hull(length: float, beam: float, depth: float, cross_section
             else:
                 # top half of hull
                 y_pos, z_raw = super_ellipse(angle, curr_width / 2.0, curr_depth, n=2.0)
-                z_pos = np.abs(z_raw) * 0.2  # upper half is shallower to create a deck
+                z_pos = np.abs(z_raw) * (0.2 if type == 'outer' else 0.1)  # upper half is shallower to create a deck, and adjusted for cockpit opening to have a lip
             
             vertices.append([x_pos, y_pos, z_pos])
 
