@@ -47,7 +47,7 @@ class Params:
     rocker_exponent: float
     
     # cockpit opening
-    cockpit_length: float
-    cockpit_width: float
+    cockpit_length: float = 0.8
+    cockpit_width: float = 0.6
     cockpit_position: float = 0.5
     cockpit_opening: bool = False
