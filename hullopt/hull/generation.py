@@ -126,13 +126,9 @@ def apply_rocker_to_hull(mesh: Trimesh, length: float, rocker_bow: float, rocker
 def add_cockpit_to_hull(mesh: Trimesh, length: float, cockpit_length: float, cockpit_width: float, cockpit_position: float) -> Trimesh:
     """
     Cuts a cockpit opening from the top deck of the hull
-    """
-    # Get hull bounds
-    z_top_deck = mesh.bounds[1][2]
-    
+    """    
     # Create a cutter that cuts through the closed top deck area
-    deck_height = max(z_top_deck, 0) 
-    cutter_height = deck_height + 0.05 
+    cutter_height = 0.10
     
     cutter = trimesh.creation.cylinder(
         radius=cockpit_width / 2.0,
@@ -146,7 +142,10 @@ def add_cockpit_to_hull(mesh: Trimesh, length: float, cockpit_length: float, coc
 
     # Position the cutter around the cockpit position
     center_x = (cockpit_position - 0.5) * length
-    center_z = deck_height / 2.0  # Centered in the deck region
+    
+    # Get z-coordinate at the edge
+    bow_z = mesh.bounds[1][2]  # Top z at bow
+    center_z = bow_z - (cutter_height / 2.0)  # Position cutter starting from top edge
     
     cutter.apply_translation([center_x, 0.0, center_z])
 

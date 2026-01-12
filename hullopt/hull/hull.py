@@ -68,16 +68,6 @@ class Hull:
     except Exception:
         mesh = outer_mesh.difference(inner_mesh)
 
-    # Apply rocker deformation
-    mesh = apply_rocker_to_hull(
-      mesh,
-      length=params.length,
-      rocker_bow=params.rocker_bow,
-      rocker_stern=params.rocker_stern,
-      rocker_position=params.rocker_position,
-      rocker_exponent=params.rocker_exponent
-    )
-
     # Center the mesh
     centroid = mesh.center_mass
     mesh.apply_translation([-centroid[0], -centroid[1], 0.0])
@@ -91,6 +81,16 @@ class Hull:
         cockpit_width=params.cockpit_width,
         cockpit_position=params.cockpit_position
       )
+    
+    # Apply rocker deformation
+    mesh = apply_rocker_to_hull(
+      mesh,
+      length=params.length,
+      rocker_bow=params.rocker_bow,
+      rocker_stern=params.rocker_stern,
+      rocker_position=params.rocker_position,
+      rocker_exponent=params.rocker_exponent
+    )
 
     return mesh
     
