@@ -31,7 +31,8 @@ dummy_hull = Hull(Params(
     rocker_exponent=2.0,
     cockpit_length=0.85,
     cockpit_width=0.50,
-    cockpit_position=0.50
+    cockpit_position=0.50,
+    cockpit_opening=True
 ))
 
 symmetric_default_hull = Hull(Params(
@@ -46,25 +47,20 @@ symmetric_default_hull = Hull(Params(
     rocker_stern=0.25,
     rocker_position=0.50,
     rocker_exponent=2.0,
-    cockpit_length=0.85,
-    cockpit_width=0.60,
-    cockpit_position=0.50,
     cockpit_opening=False
 ))
 
-example_hull_1 = Params(
+example_hull_1 = Hull(Params(
     density=kayak_density,
     hull_thickness=0.006,
     length=3.0,
     beam=0.70,
     depth=0.38,
-    cross_section_exponent=1.5,
+    cross_section_exponent=2,
     beam_position=0.55,
-    rocker_bow=0.25,
-    rocker_stern=0.20,
+    rocker_bow=0.20,
+    rocker_stern=0.25,
     rocker_position=0.50,
     rocker_exponent=2.0,
-    cockpit_length=0.80,
-    cockpit_width=0.55,
-    cockpit_position=0.50
-)
+    cockpit_opening=False
+))
