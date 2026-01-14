@@ -1,6 +1,81 @@
+
 import GPy
 from .interfaces import KernelStrategy
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Union
+
+class ConfigurablePhysicsKernel(KernelStrategy):
+    """
+    This is my newest attempt. Ideally you should be able to pass a config dict to use all the different kernels in the kernel registry.
+    Important: If the input is not in the config it will not be tracked! 
+    """
+    
+    KERNEL_REGISTRY = {
+        'rbf': GPy.kern.RBF,
+        'matern52': GPy.kern.Matern52,
+        'matern32': GPy.kern.Matern32,
+        'periodic': GPy.kern.StdPeriodic,
+        'linear': GPy.kern.Linear,
+        'white': GPy.kern.White,
+        'bias': GPy.kern.Bias,
+        'cosine': GPy.kern.Cosine
+    }
+
+    def __init__(self, config_map: Dict[str, str]):
+        """
+        :param config_map: Dictionary mapping each fucking column_map keys to kernel types.
+                           Example: {'speed': 'rbf', 'angles': 'periodic', 'shape': 'matern52'}
+        """
+        super().__init__(name="Configurable Physics Kernel", config=config_map)
+
+    def build(self, input_dim: int, column_map: Dict[str, Any]) -> GPy.kern.Kern:
+        """
+        Just goes through the column_map. If the key exists in self.config,
+        it builds that specific kernel for those specific columns.
+        """
+        kernels: List[GPy.kern.Kern] = []
+        
+        for phys_key, indices in column_map.items():
+            
+            if phys_key not in self.config:
+                continue
+
+            k_type_str = self.config[phys_key].lower()
+            if k_type_str not in self.KERNEL_REGISTRY:
+                raise ValueError(f"Unknown kernel type '{k_type_str}' requested for '{phys_key}'. Supported: {list(self.KERNEL_REGISTRY.keys())}")
+            
+            kern_cls = self.KERNEL_REGISTRY[k_type_str]
+
+
+            # Special handling for Periodic: usually applied per-dimension (1D) 
+            # to allow different periods for different angles (yaw vs heel)
+            if k_type_str in ['periodic', 'cosine']:
+                for i, idx in enumerate(indices):
+                    sub_k = kern_cls(
+                        input_dim=1, 
+                        active_dims=[idx], 
+                        name=f"{phys_key}_{i}"
+                    )
+                    kernels.append(sub_k)
+            
+            # Standard handling for RBF/Matern (Multivariate)
+            else:
+                sub_k = kern_cls(
+                    input_dim=len(indices),
+                    active_dims=indices,
+                    ARD=True, # Allow different lengthscales for different shape params. Important guys we keep this to True
+                    name=phys_key
+                )
+                kernels.append(sub_k)
+
+        if not kernels:
+            raise ValueError(f"Config resulted in no kernels! \nConfig: {self.config.keys()} \nMap: {column_map.keys()}")
+
+
+        final_kernel = kernels[0]
+        for k in kernels[1:]:
+            final_kernel = final_kernel * k
+
+        return final_kernel
 
 class StandardMaternKernel(KernelStrategy):
     """
