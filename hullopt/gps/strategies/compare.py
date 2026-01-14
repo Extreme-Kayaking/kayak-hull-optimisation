@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import Dict, Any, List
-from hullopt.gps.gp import GaussianProcessSurrogate
+from gp import GaussianProcessSurrogate
 from sklearn.metrics import mean_squared_error
 
 
