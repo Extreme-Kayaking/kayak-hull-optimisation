@@ -106,6 +106,8 @@ if __name__ == "__main__":
     }
 
     compare_models(models_to_compare, X_train, y_train, X_test, y_test, col_map)
+    os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
+
 
     print(f"\nSaving fully trained HydroPhysics model to {MODEL_PATH}...")
     final_gp = models_to_compare["HydroPhysics"]
