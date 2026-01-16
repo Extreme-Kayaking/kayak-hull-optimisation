@@ -29,11 +29,12 @@ class Hull:
       self.mesh: Trimesh = Hull.generate_mesh(params)
     else:
       self.mesh = from_mesh
+      self.mesh.density = params.density
     
-      # Calculate shell mass: surface area × thickness × material density
-      self.mass = self.mesh.area * self.hull_thickness * self.density
-      # Override mesh density so mesh.mass = volume * density equals our shell mass
-      self.mesh.density = self.mass / self.mesh.volume
+    # Calculate shell mass: surface area × thickness × material density
+    self.mass = self.mesh.area * self.hull_thickness * self.density
+    # Override mesh density so mesh.mass = volume * density equals our shell mass
+    self.mesh.density = self.mass / self.mesh.volume
 
     if not self.mesh.is_watertight:
       # We must have a watertight hull mesh
