@@ -4,7 +4,7 @@ from .params import Params
 from .constraints import Constraints
 
 
-def generate_random_hulls(n: int, cockpit_opening: bool = False, seed: int = 42) -> list[Params]:
+def generate_random_hulls(n: int, cockpit_opening: bool = False, seed: int = 42) -> list[Hull]:
     """
     Generate n random hulls that satisfy default constraints. 
     """
