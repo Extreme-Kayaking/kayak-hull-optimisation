@@ -49,15 +49,6 @@ rmse = create_gp(
 )
 print(f"Initial GP RMSE: {rmse}")
 
-
-# # First step: we generate random hulls with consraints
-# hulls = generate_random_hulls(n=20, cockpit_opening=False, seed=42)
-
-# # Second step: We run a simulation for a given heel angle:
-# for hull in hulls[:1]:
-#     for k in range(31):
-#         result = run(hull, Params(heel=0.1*k))
-
 # with open("gp_data.pkl", "rb") as f_read:
 #     while True:
 #         try:
