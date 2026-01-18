@@ -4,22 +4,27 @@ Hull constraint logic
 
 class Constraints:
   def __init__(self,
-               # Absolute parameter bounds
-               length_range: tuple[float, float]=(1.5,3.0),
-               beam_range: tuple[float, float]=(0.6,0.8),
-               depth_range: tuple[float, float]=(0.25,0.40),
-               hull_thickness_range: tuple[float, float]=(0.002,0.006),
-               cross_section_exponent_range: tuple[float, float]=(1.5,3.0),
-               beam_position_range: tuple[float, float] = (0.40, 0.60),
-               rocker_bow_range: tuple[float, float]=(0.05,0.35) ,
-               rocker_stern_range: tuple[float, float]=(0.05,0.35),
-               rocker_position_range: tuple[float, float]=(0.35,0.60),
-               rocker_exponent_range: tuple[float, float]=(2.0,3.0),
+              # Absolute parameter bounds
+              length_range: tuple[float, float]=(1.5, 4.5), # Slightly widened for general use
+              beam_range: tuple[float, float]=(0.5, 0.9),
+              depth_range: tuple[float, float]=(0.20, 0.45),
+              hull_thickness_range: tuple[float, float]=(0.002, 0.006),
+              cross_section_exponent_range: tuple[float, float]=(1.5, 3.5),
+              beam_position_range: tuple[float, float] = (0.40, 0.60),
+              rocker_bow_range: tuple[float, float]=(0.05, 0.35),
+              rocker_stern_range: tuple[float, float]=(0.05, 0.35),
+              rocker_position_range: tuple[float, float]=(0.35, 0.60),
+              rocker_exponent_range: tuple[float, float]=(2.0, 4.0),
+              # Cockpit parameter bounds
+              cockpit_length_range: tuple[float, float] = (0.40, 1.20),
+              cockpit_width_range: tuple[float, float] = (0.35, 0.55),
+              cockpit_position_range: tuple[float, float] = (0.45, 0.55),
 
-               # Ratio parameter bounds
-               length_to_beam_ratio_range: tuple[float, float] = (3.0, 6.5),
-               beam_to_depth_ratio_range: tuple[float, float] = (1.5, 2.5),
-               ) -> None:
+              # Ratio parameter bounds
+              length_to_beam_ratio_range: tuple[float, float] = (3.0, 7.5),
+              beam_to_depth_ratio_range: tuple[float, float] = (1.5, 3.0),
+              ) -> None:
+
     
     """
     Initialize hull constraints
@@ -39,6 +44,9 @@ class Constraints:
     self.rocker_exponent_range = rocker_exponent_range
     self.length_to_beam_ratio_range = length_to_beam_ratio_range
     self.beam_to_depth_ratio_range = beam_to_depth_ratio_range
+    self.cockpit_length_range = cockpit_length_range
+    self.cockpit_width_range = cockpit_width_range
+    self.cockpit_position_range = cockpit_position_range
 
   def check_hull(self, hull):
     # Check hull satisfies constraints
