@@ -8,7 +8,6 @@ from hullopt.simulations.params import Params
 from hullopt.config.defaults import dummy_hull
 
 
-from hullopt.gps.strategies.compare import compare_models    
 from hullopt.gps.strategies.kernels import HydroPhysicsKernel, StandardMaternKernel, ConfigurablePhysicsKernel
 from hullopt.gps.strategies.priors import HydrostaticBaselinePrior, ZeroMeanPrior
 from hullopt.gps.utils import load_simulation_data

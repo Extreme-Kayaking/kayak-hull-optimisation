@@ -1,5 +1,5 @@
 import numpy as np
-from gp import GaussianProcessSurrogate
+from .gp import GaussianProcessSurrogate
 from sklearn.metrics import mean_squared_error
 from typing import List, Optional
 
