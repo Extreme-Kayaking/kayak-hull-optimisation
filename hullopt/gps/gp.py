@@ -78,7 +78,7 @@ class GaussianProcessSurrogate:
         
 if __name__ == "__main__":   
     from strategies.compare import compare_models    
-    from strategies.kernels import HydroPhysicsKernel, StandardMaternKernel, ConfigurablePhysicsKernel
+    from strategies.kernels import HydroPhysicsKernel, StandardMaternKernel, ConfigurablePhysicsKernel, RBFKernel
     from strategies.priors import HydrostaticBaselinePrior, ZeroMeanPrior
     from utils import load_simulation_data
 
@@ -96,10 +96,10 @@ if __name__ == "__main__":
     p_strat = HydrostaticBaselinePrior(column_order)
     z_strat = ZeroMeanPrior()
 
-    config_dict = {"rocker_bow": "matern52", "heel": "periodic" }
+    kernel_config_dict = {"rocker_bow": "matern52", "heel": "periodic" }
 
     models_to_compare = {
-        "HydroPhysics": GaussianProcessSurrogate(ConfigurablePhysicsKernel(config_dict), z_strat),
+        "HydroPhysics": GaussianProcessSurrogate(ConfigurablePhysicsKernel(kernel_config_dict), z_strat),
         "Standard Everything": GaussianProcessSurrogate(StandardMaternKernel(), z_strat),
 
     }
@@ -112,3 +112,5 @@ if __name__ == "__main__":
     final_gp = models_to_compare["HydroPhysics"]
     # final_gp.fit(X_train, y_train, col_map) Gets already fitted inside the compare models function
     final_gp.save(MODEL_PATH)
+
+    
