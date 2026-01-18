@@ -7,7 +7,7 @@ from hullopt.simulations.analytic import run
 from hullopt.simulations.params import Params
 from hullopt.config.defaults import dummy_hull
 
-
+from hullopt.gps.strategies.compare import compare_models
 from hullopt.gps.strategies.kernels import HydroPhysicsKernel, StandardMaternKernel, ConfigurablePhysicsKernel
 from hullopt.gps.strategies.priors import HydrostaticBaselinePrior, ZeroMeanPrior
 from hullopt.gps.utils import load_simulation_data
@@ -31,7 +31,7 @@ if not os.path.exists(DATA_PATH):
     hulls = generate_random_hulls(n=20, cockpit_opening=False, seed=42)
     # Second step: We run a simulation for a given heel angle:
     for hull in hulls[:1]:
-        for k in range(31):
+        for k in range(301):
             result = run(hull, Params(heel=0.1*k))
 
     
@@ -41,13 +41,13 @@ X_train, X_test, y_train, y_test = train_test_split(
         X_full, y_full, test_size=0.2, random_state=42
     )
 
-rmse = create_gp(
-    GaussianProcessSurrogate(ConfigurablePhysicsKernel(KERNEL_CONFIG), ZeroMeanPrior()),
+rmse = compare_models({"cool":
+    GaussianProcessSurrogate(ConfigurablePhysicsKernel(KERNEL_CONFIG), ZeroMeanPrior())},
     X_train,
     y_train,
-    column_order,
     X_test,
-    y_test
+    y_test,
+    column_order,
 )
 print(f"Initial GP RMSE: {rmse}")
 

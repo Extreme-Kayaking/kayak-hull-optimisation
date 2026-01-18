@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split 
 
 from typing import Dict, Any, Tuple, Optional, List
-from strategies.interfaces import KernelStrategy, PriorStrategy
+from .strategies.interfaces import KernelStrategy, PriorStrategy
 
 
 
@@ -112,5 +112,3 @@ if __name__ == "__main__":
     final_gp = models_to_compare["HydroPhysics"]
     # final_gp.fit(X_train, y_train, col_map) Gets already fitted inside the compare models function
     final_gp.save(MODEL_PATH)
-
-    
