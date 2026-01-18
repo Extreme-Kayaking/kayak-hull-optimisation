@@ -97,37 +97,39 @@ class WeightSelector:
 # -----------------------------------------------------------------------------
 class ResultVisualizer:
     """
-    A GUI class to display optimization results, parameters, and launch the 3D hull view.
+    A GUI class to display optimization results, parameters, results breakdown, 
+    and launch the 3D hull view.
     """
-    def __init__(self, params_dataclass_instance, score: float, hull_class, title="Optimization Result"):
+    def __init__(self, params_dataclass_instance, results_dict: dict, score: float, hull_class, title="Optimization Result"):
         """
         Args:
             params_dataclass_instance: The dataclass instance containing optimal parameters.
-            score (float): The final score achieved.
+            results_dict (dict): The dictionary containing detailed score components.
+            score (float): The final total score achieved.
             hull_class: The class used to instantiate the Hull (must take params in __init__ and have .show()).
             title (str): Window title.
         """
         self.params = params_dataclass_instance
+        self.results_dict = results_dict
         self.score = score
         self.hull_class = hull_class
         self.title_text = title
         
-        # Extract dictionary from dataclass
+        # Extract dictionary from dataclass for Parameters
         if hasattr(self.params, "__dataclass_fields__"):
-            self.data_dict = asdict(self.params)
+            self.params_dict = asdict(self.params)
         else:
-            # Fallback for standard objects
-            self.data_dict = {k: v for k, v in self.params.__dict__.items() if not k.startswith('_')}
+            self.params_dict = {k: v for k, v in self.params.__dict__.items() if not k.startswith('_')}
 
-    def _create_row(self, parent, key, value, row_idx):
+    def _create_row(self, parent, key, value, row_idx, value_color=None):
         """Helper to create one Key: Value display row."""
         
         # Format key text
-        key_text = key.replace("_", " ").title()
+        key_text = str(key).replace("_", " ").title()
         
         # Key Label
-        label_key = ctk.CTkLabel(parent, text=key_text, font=("Roboto", 14, "bold"), anchor="w")
-        label_key.grid(row=row_idx, column=0, padx=20, pady=8, sticky="w")
+        label_key = ctk.CTkLabel(parent, text=key_text, font=("Roboto", 13, "bold"), anchor="w")
+        label_key.grid(row=row_idx, column=0, padx=15, pady=6, sticky="w")
         
         # Value formatting
         if isinstance(value, float):
@@ -138,12 +140,11 @@ class ResultVisualizer:
             val_text = str(value)
 
         # Value Label
-        label_val = ctk.CTkLabel(parent, text=val_text, font=("Roboto Mono", 14), text_color="#AABBAA", anchor="e")
-        label_val.grid(row=row_idx, column=1, padx=20, pady=8, sticky="e")
-        
-        # Separator line (optional, purely visual)
-        # separator = ctk.CTkFrame(parent, height=1, fg_color="gray30")
-        # separator.grid(row=row_idx+1, column=0, columnspan=2, sticky="ew", padx=10)
+        if value_color is None:
+            value_color = "#AABBAA" # Default grayish
+            
+        label_val = ctk.CTkLabel(parent, text=val_text, font=("Roboto Mono", 13), text_color=value_color, anchor="e")
+        label_val.grid(row=row_idx, column=1, padx=15, pady=6, sticky="e")
 
     def run(self):
         """
@@ -151,13 +152,9 @@ class ResultVisualizer:
         """
         app = ctk.CTk()
         app.title(self.title_text)
-        app.geometry("500x700") # Taller window for list
+        app.geometry("900x700") # Wider window for two columns
         
-        # Grid config
-        app.grid_columnconfigure(0, weight=1)
-        app.grid_rowconfigure(2, weight=1) # The list gets the expansion space
-
-        # --- 1. Header Frame (Score) ---
+        # --- 1. Header Frame (Total Score) ---
         header_frame = ctk.CTkFrame(app, fg_color="transparent")
         header_frame.pack(fill="x", padx=20, pady=(20, 10))
         
@@ -165,28 +162,41 @@ class ResultVisualizer:
         lbl_title.pack()
         
         # BIG SCORE DISPLAY
-        lbl_score = ctk.CTkLabel(header_frame, text=f"{self.score:.4f}", font=("Roboto", 48, "bold"), text_color="#4B8BBE") # Blue-ish text
+        lbl_score = ctk.CTkLabel(header_frame, text=f"{self.score:.4f}", font=("Roboto", 48, "bold"), text_color="#4B8BBE") # Blue-ish
         lbl_score.pack(pady=(0, 5))
         
-        lbl_units = ctk.CTkLabel(header_frame, text="Objective Score", font=("Roboto", 12))
+        lbl_units = ctk.CTkLabel(header_frame, text="Total Objective Score", font=("Roboto", 12))
         lbl_units.pack()
 
-        # --- 2. Parameters Scrollable List ---
-        # Filter to show only relevant items (approx 10-25)
-        # For this example we just show all, but we could slice list(self.data_dict.items())[:25]
+        # --- 2. Main Content Area (Two Columns) ---
+        content_frame = ctk.CTkFrame(app, fg_color="transparent")
+        content_frame.pack(fill="both", expand=True, padx=20, pady=10)
         
-        scroll_frame = ctk.CTkScrollableFrame(app, label_text="Design Parameters")
-        scroll_frame.pack(fill="both", expand=True, padx=20, pady=20)
-        scroll_frame.grid_columnconfigure(1, weight=1) # Push values to right
+        content_frame.grid_columnconfigure(0, weight=1) # Left col
+        content_frame.grid_columnconfigure(1, weight=1) # Right col
+        content_frame.grid_rowconfigure(0, weight=1)
+
+        # --- LEFT COLUMN: Design Parameters ---
+        left_frame = ctk.CTkScrollableFrame(content_frame, label_text="Input Parameters")
+        left_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
+        left_frame.grid_columnconfigure(1, weight=1) # Push values to right
+
+        for idx, (k, v) in enumerate(self.params_dict.items()):
+            self._create_row(left_frame, k, v, idx)
+
+        # --- RIGHT COLUMN: Score Breakdown ---
+        right_frame = ctk.CTkScrollableFrame(content_frame, label_text="Score Breakdown")
+        right_frame.grid(row=0, column=1, sticky="nsew", padx=(10, 0))
+        right_frame.grid_columnconfigure(1, weight=1) # Push values to right
         
-        for idx, (k, v) in enumerate(self.data_dict.items()):
-            self._create_row(scroll_frame, k, v, idx)
+        for idx, (k, v) in enumerate(self.results_dict.items()):
+            # Use a slightly brighter color for results to distinguish them
+            self._create_row(right_frame, k, v, idx, value_color="#E0E0E0")
 
         # --- 3. Action Button (Show 3D) ---
         def on_show_hull():
-            print(f"Launching 3D View for hull with params: {self.params}")
+            print(f"Launching 3D View for hull...")
             try:
-                # Instantiate Hull with params and call show()
                 hull_instance = self.hull_class(self.params)
                 hull_instance.show()
             except Exception as e:
@@ -194,8 +204,11 @@ class ResultVisualizer:
                 import tkinter.messagebox
                 tkinter.messagebox.showerror("Error", f"Could not launch visualization:\n{e}")
 
+        footer_frame = ctk.CTkFrame(app, fg_color="transparent")
+        footer_frame.pack(fill="x", padx=20, pady=20)
+
         btn = ctk.CTkButton(
-            app, 
+            footer_frame, 
             text="VIEW 3D HULL", 
             command=on_show_hull, 
             height=60, 
@@ -203,11 +216,9 @@ class ResultVisualizer:
             fg_color="#2CC985", # Green accent
             hover_color="#229965"
         )
-        btn.pack(fill="x", padx=20, pady=20)
+        btn.pack(fill="x")
 
         app.mainloop()
-
-
 # -----------------------------------------------------------------------------
 # 3. Main Execution Example
 # -----------------------------------------------------------------------------
@@ -269,5 +280,5 @@ if __name__ == "__main__":
     final_score = 0.8742 # Example flow score
     
     # Launch the visualizer
-    visualizer = ResultVisualizer(optimal_params, final_score, MockHull)
+    visualizer = ResultVisualizer(optimal_params,  {"Speed":10,"Steerability": 2,"Druggability": 3}, final_score, MockHull)
     visualizer.run()

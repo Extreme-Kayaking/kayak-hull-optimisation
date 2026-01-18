@@ -28,8 +28,12 @@ def optimise(F, Constraint: Constraints) -> Params:
 
     # 970 kg/m^3 is typical for High-Density Polyethylene (HDPE) used in kayaks
     FIXED_DENSITY = 970.0 
+    best_score = float('-inf')
+    best_dict = {}
+   
     
     def objective(trial):
+
         p_len = trial.suggest_float("length", *Constraint.length_range)
         p_beam = trial.suggest_float("beam", *Constraint.beam_range)
         p_depth = trial.suggest_float("depth", *Constraint.depth_range)
@@ -72,7 +76,10 @@ def optimise(F, Constraint: Constraints) -> Params:
             raise optuna.TrialPruned()
 
         try:
-            score = F(current_params)
+            score, dic = F(current_params)
+            if score > best_score:
+                best_score = score
+                best_dict = dic
             return score
         except Exception as e:
 
@@ -109,4 +116,4 @@ def optimise(F, Constraint: Constraints) -> Params:
         cockpit_opening=False
     )
     
-    return best_params
+    return best_params, best_dict, best_score
