@@ -4,6 +4,8 @@ from functools import partial
 import mpl_axes_aligner
 from collections import defaultdict
 from hullopt.gps.utils import load_simulation_data
+import hullopt
+from hullopt import Hull
 
 from hullopt import simulations
 
@@ -87,17 +89,29 @@ def plot_simulation(simulation, hull, lower = -np.pi, upper = np.pi, resolution 
 def plot_pickle(hull_index = 0):
     xs, ys, column_order = load_simulation_data("./gp_data.pkl")
     i = column_order.index("heel")
-    
-    def string(t):
-        return str(tuple(str(round(x, 4)) for x in t))
-    split = zip(map(lambda x: (string(list(x[:i]) + list(x[i+1:])), (x[i])), xs), ys)
-    
-    grouped = defaultdict(list)
-    for (key, heel), value in split:
-        print(key)
-        grouped[key].append((heel, value))
+    j = column_order.index("cost") # TODO: Make cost an output!
+    print(j)
+    split = list(zip(map(lambda x:
+                         (list(x[:j]) + list(x[j+1:i]) + list(x[i+1:]) if j < i else
+                          list(x[:i]) + list(x[i+1:j]) + list(x[j+1:]),
+                          (x[i])),
+                         xs),
+                     ys))
 
-    data = list(grouped.values())[hull_index]
+    seen = []
+    j = 0
+    for (hull, _heel), _y in split:
+        if not any(np.array_equal(hull, hull2) for hull2 in seen):
+            seen += [hull]
+            j += 1
+        if j > hull_index:
+            break
+
+    def wrap(x):
+        return x if x <= np.pi else x - 2 * np.pi
+        
+    data = list(map(lambda x: (wrap(x[0][1]), x[1]), filter(lambda x: np.array_equal(x[0][0], seen[-1]), split)))
+    data.sort(key=lambda x: x[0])
     
     heels = [simulations.Params(d[0]) for d in data]
     rs = [simulations.Result(righting_moment = (d[1][0], d[1][1], d[1][2]),
@@ -106,5 +120,55 @@ def plot_pickle(hull_index = 0):
                              cost = 0,
                              scene = None)
           for d in data]
+    print(len(heels))
     plot_heels(heels, rs)
-    return xs, grouped
+
+def view_pickle(hull_index = 0, heel = 0):
+    xs, ys, column_order = load_simulation_data("./gp_data.pkl")
+    i = column_order.index("heel")
+    j = column_order.index("cost") # TODO: Make cost an output!
+    split = list(zip(map(lambda x:
+                         (list(x[:j]) + list(x[j+1:i]) + list(x[i+1:]) if j < i else
+                          list(x[:i]) + list(x[i+1:j]) + list(x[j+1:]),
+                          (x[i])),
+                         xs),
+                     ys))
+
+    seen = []
+    j = 0
+    for (hull, _heel), _y in split:
+        if not any(np.array_equal(hull, hull2) for hull2 in seen):
+            seen += [hull]
+            j += 1
+        if j > hull_index:
+            break
+
+    param_names = list(filter(lambda x: x != "cost" and x != "heel", column_order))
+    hull_params = {k: v for (k,v) in zip(param_names, seen[-1])}
+    hull_obj = Hull(hullopt.ParamsHull(**hull_params))
+    simulations.analytic.run(hull_obj, simulations.Params(heel)).scene.show()
+
+def resimulate_pickle(hull_index = 0):
+    xs, ys, column_order = load_simulation_data("./gp_data.pkl")
+    i = column_order.index("heel")
+    j = column_order.index("cost") # TODO: Make cost an output!
+    split = list(zip(map(lambda x:
+                         (list(x[:j]) + list(x[j+1:i]) + list(x[i+1:]) if j < i else
+                          list(x[:i]) + list(x[i+1:j]) + list(x[j+1:]),
+                          (x[i])),
+                         xs),
+                     ys))
+
+    seen = []
+    j = 0
+    for (hull, _heel), _y in split:
+        if not any(np.array_equal(hull, hull2) for hull2 in seen):
+            seen += [hull]
+            j += 1
+        if j > hull_index:
+            break
+
+    param_names = list(filter(lambda x: x != "cost" and x != "heel", column_order))
+    hull_params = {k: v for (k,v) in zip(param_names, seen[-1])}
+    hull_obj = Hull(hullopt.ParamsHull(**hull_params))
+    plot_simulation(simulations.analytic, hull_obj)
