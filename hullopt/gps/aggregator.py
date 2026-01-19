@@ -48,7 +48,7 @@ class Aggregator:
 
         def update(x, sample):
             update_gp(self.gp,
-                      np.asarray([x]),
+                      np.asarray([x if k = "heel" else hull.params[k] for k in column_order]),
                       np.asarray([np.asarray(sample.righting_moment).flatten(),
                                   sample.reserve_buoyancy,
                                   sample.reserve_buoyancy_hull]),
