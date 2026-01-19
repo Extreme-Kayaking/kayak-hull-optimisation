@@ -10,9 +10,10 @@ import optuna
 from hullopt.hull.params import Params
 from hullopt.hull.hull import Hull
 from hullopt.hull.constraints import Constraints
+import hullopt
 
-
-
+best_score = float('-inf')
+best_dic = {}
 
 def optimise(F, Constraint: Constraints, time=1) -> Params:
     """
@@ -67,23 +68,22 @@ def optimise(F, Constraint: Constraints, time=1) -> Params:
             cockpit_length=p_c_len,
             cockpit_width=p_c_wid,
             cockpit_position=p_c_pos,
-            cockpit_opening=False
+            cockpit_opening=True
         )
-
         try:
             Constraint.check_hull(Hull(current_params))
         except ValueError:
 
             raise optuna.TrialPruned()
-
+        import traceback
         try:
-            score, dic = F(current_params)
+            score, dic = F(Hull(current_params))
             if score > best_score:
-                best_score = score
-                best_dict = dic
+                hullopt.optimise.best_score = score
+                hullopt.optimise.best_dict = dic
             return score
         except Exception as e:
-
+            traceback.print_exc()
             return float('-inf')
         
     optuna.logging.set_verbosity(optuna.logging.WARNING) 
@@ -117,4 +117,4 @@ def optimise(F, Constraint: Constraints, time=1) -> Params:
         cockpit_opening=False
     )
     
-    return best_params, best_dict, best_score
+    return best_params

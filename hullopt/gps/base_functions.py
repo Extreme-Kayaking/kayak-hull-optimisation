@@ -50,5 +50,7 @@ def update_gp(
             return rmse
 
     except Exception as e:
-        print(f"  Err updating model: {e}")
+        print(f"  Err updating model:")
+        import traceback
+        traceback.print_exc()
         return np.nan

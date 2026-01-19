@@ -17,6 +17,7 @@ from hullopt.gps.gp import GaussianProcessSurrogate
 from hullopt.optimise import optimise
 from hullopt.hull import Hull
 import numpy as np
+import hullopt
 
 
 # Configuration variables here
@@ -125,7 +126,7 @@ def remove_costs(Xs):
 if os.path.exists(RIGHTING_MODEL_PATH):
     print(f"Loading {RIGHTING_MODEL_PATH}...")
     with open(RIGHTING_MODEL_PATH, 'rb') as f:
-        gp_righting = pickle.load(f)
+        gp_righting = GaussianProcessSurrogate(model=pickle.load(f))
 else:
     print("Training Batch 1 (Righting)...")
     gps = [GaussianProcessSurrogate(ConfigurablePhysicsKernel(KC), ZeroMeanPrior()) for KC in (KERNEL_CONFIG_HYDRO_PROD, KERNEL_CONFIG_HYDRO_SUM, KERNEL_CONFIG_MATERN, KERNEL_CONFIG_RBF, KERNEL_CONFIG_LINEAR)]
@@ -140,7 +141,7 @@ else:
 if os.path.exists(BUOYANCY_MODEL_PATH):
     print(f"Loading {BUOYANCY_MODEL_PATH}...")
     with open(BUOYANCY_MODEL_PATH, 'rb') as f:
-        gp_buoyancy = pickle.load(f)
+        gp_buoyancy = GaussianProcessSurrogate(model=pickle.load(f))
 else:
     print("Training Batch 2 (Buoyancy)...")
     gps = [GaussianProcessSurrogate(ConfigurablePhysicsKernel(KC), ZeroMeanPrior()) for KC in (KERNEL_CONFIG_HYDRO_PROD, KERNEL_CONFIG_HYDRO_SUM, KERNEL_CONFIG_HYDRO_PERIODIC, KERNEL_CONFIG_MATERN, KERNEL_CONFIG_RBF, KERNEL_CONFIG_LINEAR)]
@@ -167,8 +168,8 @@ user_weights = WeightSelector(GP_Result).run()
 aggregator = Aggregator(user_weights, gp_righting, gp_buoyancy, column_order)
 f = aggregator.f
 
-best_params, best_dict, best_score = optimise(f, Constraints(), time=1)
+best_params = optimise(f, Constraints(), time=1)
 print("Optimised!!")
 
-visualizer = ResultVisualizer(best_params, best_dict, best_score, Hull)
+visualizer = ResultVisualizer(best_params, hullopt.optimise.best_dict, hullopt.optimise.best_score, Hull)
 visualizer.run()

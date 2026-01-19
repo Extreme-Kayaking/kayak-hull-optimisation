@@ -15,11 +15,12 @@ class GaussianProcessSurrogate:
     Wrapper for GPy to handle boring shit
     """
     def __init__(self, 
-                 kernel_strat: KernelStrategy, 
-                 prior_strat: PriorStrategy):
+                 kernel_strat: KernelStrategy=None, 
+                 prior_strat: PriorStrategy=None,
+                 model=None):
         self.k_strat = kernel_strat
         self.p_strat = prior_strat
-        self.model: Optional[GPy.models.GPRegression] = None
+        self.model: Optional[GPy.models.GPRegression] = model
 
     def fit(self, X: np.ndarray, y: np.ndarray, column_order: List[str]) -> None:
         """
@@ -27,15 +28,14 @@ class GaussianProcessSurrogate:
         """
         if self.model is not None:
             print("Warning: Overwriting existing model.")
-
         input_dim = X.shape[1]
         
-
-        kernel = self.k_strat.build(input_dim, column_order)
-        mean_func = self.p_strat.get_mean_function(input_dim, output_dim=y.shape[1])
+        if self.k_strat:
+            kernel = self.k_strat.build(input_dim, column_order)
+            mean_func = self.p_strat.get_mean_function(input_dim, output_dim=y.shape[1])
         
 
-        self.model = GPy.models.GPRegression(X, y, kernel=kernel, mean_function=mean_func, normalizer=True)
+            self.model = GPy.models.GPRegression(X, y, kernel=kernel, mean_function=mean_func, normalizer=True)
         self.model.kern.constrain_bounded(1e-3, 1000.0, warning=False)
         self.model.optimize(messages=True)
 
