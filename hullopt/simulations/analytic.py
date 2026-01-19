@@ -80,7 +80,7 @@ def _reserve_buoyancy(mesh: Trimesh, draught):
   f = _compose(lambda t: -t[1],
               partial(_calculate_centre_buoyancy_and_displacement, mesh))
   brute_threshold = (upper-lower) * config.hyperparameters.draught_threshold * 100 # TODO parameterise
-  ranges = [slice(draught,upper,brute_threshold)]
+  ranges = [slice(draught,upper, (upper - draught)/2 if brute_threshold > upper - draught else brute_threshold)]
   best_draught = float(optimize.brute(f, ranges)[0])
   result = cast(optimize.OptimizeResult,
                 optimize.minimize_scalar(

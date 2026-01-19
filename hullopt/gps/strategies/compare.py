@@ -63,7 +63,7 @@ def compare_models(
     
     markers = ['o', 's', '^', 'D'] # Different markers for different lines
     for i, (name, rmse_scores) in enumerate(results.items()):
-        plt.plot(valid_ratios, rmse_scores, 
+        plt.plot(ratios, rmse_scores, 
                  label=name, 
                  marker=markers[i % len(markers)], 
                  linewidth=2)
