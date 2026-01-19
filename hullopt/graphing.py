@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from functools import partial
 import mpl_axes_aligner
+from collections import defaultdict
+from hullopt.gps.utils import load_simulation_data
 
 from hullopt import simulations
 
@@ -81,3 +83,28 @@ def plot_simulation(simulation, hull, lower = -np.pi, upper = np.pi, resolution 
     params = list(map(simulations.Params, np.linspace(lower, upper, resolution)))
     results = list(map(partial(simulation.run, hull), params))
     plot_heels(params, results)
+
+def plot_pickle(hull_index = 0):
+    xs, ys, column_order = load_simulation_data("./gp_data.pkl")
+    i = column_order.index("heel")
+    
+    def string(t):
+        return str(tuple(str(round(x, 4)) for x in t))
+    split = zip(map(lambda x: (string(list(x[:i]) + list(x[i+1:])), (x[i])), xs), ys)
+    
+    grouped = defaultdict(list)
+    for (key, heel), value in split:
+        print(key)
+        grouped[key].append((heel, value))
+
+    data = list(grouped.values())[hull_index]
+    
+    heels = [simulations.Params(d[0]) for d in data]
+    rs = [simulations.Result(righting_moment = (d[1][0], d[1][1], d[1][2]),
+                             reserve_buoyancy = d[1][3],
+                             reserve_buoyancy_hull = d[1][4],
+                             cost = 0,
+                             scene = None)
+          for d in data]
+    plot_heels(heels, rs)
+    return xs, grouped

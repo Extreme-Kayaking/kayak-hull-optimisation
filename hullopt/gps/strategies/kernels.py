@@ -11,7 +11,7 @@ class ConfigurablePhysicsKernel(KernelStrategy):
     Important: If the input is not in the config it will not be tracked! 
     """
     @staticmethod
-    def _build_periodic_matern(input_dim: int, active_dims: List[int], name: str) -> GPy.kern.Kern:
+    def _build_periodic_matern(input_dim: int, active_dims: List[int], name: str, ARD=True) -> GPy.kern.Kern:
         """
         Creates a Locally Periodic kernel (Periodic * Matern52).
         This allows periodicity that can evolve/decay over distance.
@@ -20,12 +20,12 @@ class ConfigurablePhysicsKernel(KernelStrategy):
         kp = GPy.kern.StdPeriodic(input_dim=input_dim, active_dims=active_dims, name=f"{name}_p")
         
         # Matern decay (Allows the pattern to change shape over long distances)
-        km = GPy.kern.Matern52(input_dim=input_dim, active_dims=active_dims, name=f"{name}_m")
+        km = GPy.kern.Matern52(input_dim=input_dim, active_dims=active_dims, name=f"{name}_m", ARD=ARD)
         
         return kp * km
     
     @staticmethod
-    def _build_sum_periodic_matern(input_dim: int, active_dims: List[int], name: str) -> GPy.kern.Kern:
+    def _build_sum_periodic_matern(input_dim: int, active_dims: List[int], name: str, ARD=True) -> GPy.kern.Kern:
         """
         Creates a Locally Periodic kernel (Periodic * Matern52).
         This allows periodicity that can evolve/decay over distance.
@@ -34,7 +34,7 @@ class ConfigurablePhysicsKernel(KernelStrategy):
         kp = GPy.kern.StdPeriodic(input_dim=input_dim, active_dims=active_dims, name=f"{name}_p")
         
         # Matern decay (Allows the pattern to change shape over long distances)
-        km = GPy.kern.Matern52(input_dim=input_dim, active_dims=active_dims, name=f"{name}_m")
+        km = GPy.kern.Matern52(input_dim=input_dim, active_dims=active_dims, name=f"{name}_m", ARD=ARD)
         
         return kp + km
 

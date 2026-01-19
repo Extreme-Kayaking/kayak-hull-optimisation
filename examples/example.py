@@ -23,7 +23,49 @@ from hullopt.hull import Hull
 # Configuration variables here
 DATA_PATH = "gp_data.pkl"
 MODEL_PATH = "models/boat_gp.pkl"
-KERNEL_CONFIG = {"rocker_bow": "matern52", "heel": "periodic" }
+KERNEL_CONFIG_HYDRO_PROD = {"length": "rbf",
+                 "beam": "rbf",
+                 "depth": "rbf",
+                 "cross_section_exponent": "matern52",
+                 "beam_position": "matern52",
+                 "rocker_bow": "matern52",
+                 "rocker_sterm": "matern52",
+                 "rocker_position": "matern52",
+                 "rocker_exponent": "matern52",
+                 "heel": "periodic_matern" }
+
+KERNEL_CONFIG_HYDRO_SUM = {"length": "rbf",
+                 "beam": "rbf",
+                 "depth": "rbf",
+                 "cross_section_exponent": "matern52",
+                 "beam_position": "matern52",
+                 "rocker_bow": "matern52",
+                 "rocker_sterm": "matern52",
+                 "rocker_position": "matern52",
+                 "rocker_exponent": "matern52",
+                 "heel": "sum_periodic_matern" }
+
+KERNEL_CONFIG_MATERN = {"length": "rbf",
+                 "beam": "rbf",
+                 "depth": "rbf",
+                 "cross_section_exponent": "matern52",
+                 "beam_position": "matern52",
+                 "rocker_bow": "matern52",
+                 "rocker_sterm": "matern52",
+                 "rocker_position": "matern52",
+                 "rocker_exponent": "matern52",
+                 "heel": "matern52" }
+
+KERNEL_CONFIG_RBF = {"length": "rbf",
+                 "beam": "rbf",
+                 "depth": "rbf",
+                 "cross_section_exponent": "rbf",
+                 "beam_position": "rbf",
+                 "rocker_bow": "rbf",
+                 "rocker_sterm": "rbf",
+                 "rocker_position": "rbf",
+                 "rocker_exponent": "rbf",
+                 "heel": "rbf" }
 
 
 if not os.path.exists(MODEL_PATH):
@@ -49,17 +91,19 @@ if not os.path.exists(MODEL_PATH):
             X_full, y_full, test_size=0.2, random_state=42
 
         )
-    gp = GaussianProcessSurrogate(ConfigurablePhysicsKernel(KERNEL_CONFIG), ZeroMeanPrior())
-    gp.save(MODEL_PATH)
+    gps = [GaussianProcessSurrogate(ConfigurablePhysicsKernel(KERNEL_CONFIG), ZeroMeanPrior()) for KERNEL_CONFIG in (KERNEL_CONFIG_HYDRO_PROD, KERNEL_CONFIG_HYDRO_SUM, KERNEL_CONFIG_MATERN, KERNEL_CONFIG_RBF)]
 
-    rmse = compare_models({"cool":
-        gp},
+    rmse = compare_models({"HYDRO_PROD": gps[0],
+                           "HYDRO_SUM": gps[1],
+                           "MATERN": gps[2],
+                           "RBF": gps[3] },
         X_train,
         y_train,
         X_test,
         y_test,
         column_order,
     )
+    gps[0].save(MODEL_PATH)
     print(f"Initial GP RMSE: {rmse}")
 
 else:
