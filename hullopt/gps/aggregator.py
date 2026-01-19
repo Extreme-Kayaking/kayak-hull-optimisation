@@ -22,11 +22,11 @@ def a_SC(dim, Xs, mu, varSigma):
 # Integrals
 # Maximum variance sampling (up to point)
 # TODO: Explore Quadrature acquisition functions
-def a_INT(bounds, Xs, mu, varSigma, moments):
-    return [varSigma[0 if moments else 3] if bounds[0] <= x < bounds[1] else 0 for x in Xs]
+def a_INT(bounds, Xs, mu, varSigma):
+    return [varSigma[x][0] if bounds[0] <= x < bounds[1] else 0 for x in Xs]
 
 class Aggregator:
-    def __init__(self, user_weights, gp: GaussianProcessSurrogate, column_order):
+    def __init__(self, user_weights, gp_righting: GaussianProcessSurrogate, gp_buoyancy: GaussianProcessSurrogate, column_order):
         self.weights = {}
         tot = 0
         for k in user_weights.keys():
@@ -34,7 +34,8 @@ class Aggregator:
             tot += user_weights[k]
             self.weights[k] = (prev_tot, tot)
         self.tot = tot
-        self.gp = gp
+        self.gp_righting = gp_righting
+        self.gp_buoyancy = gp_buoyancy
         self.column_order = column_order
 
     def f(self, hull: Hull, budget: int = 200) -> Tuple[float, dict]:
@@ -46,12 +47,11 @@ class Aggregator:
         initial_stability = 0
         initial_buoyancy = 0
 
-        def update(x, sample):
-            update_gp(self.gp,
+        def update(x, sample, righting=True):
+            update_gp(self.gp_righting if righting else self.gp_buoyancy,
                       np.asarray([x if k == "heel" else hull.params[k] for k in self.column_order]),
-                      np.asarray([np.asarray(sample.righting_moment).flatten(),
-                                  sample.reserve_buoyancy,
-                                  sample.reserve_buoyancy_hull]),
+                      np.asarray(sample.righting_moment) if righting else\
+                      [sample.reserve_buoyancy, sample.reserve_buoyancy_hull],
                       self.column_order)
 
         def adjust_budgets(budgets, k, cost):
@@ -64,18 +64,19 @@ class Aggregator:
                         if not k2 == k: self.weights[k2][0] -= diff
                         self.weights[k2][1] -= diff
 
-        mu, varSigma = self.gp.predict(X_grid)    
+        mu_r, varSigma_r = self.gp_righting.predict(X_grid)    
+        mu_b, varSigma_b = self.gp_buoyancy.predict(X_grid)    
         while budget > 0:
             r = np.random.random() * self.tot
             budgets = {k: self.weights[k][1]/self.tot * budget for k in self.weights.keys()}
-            root_estimate = np.where(mu < 0)[0].item()
+            root_estimate = np.where(mu_r < 0)[0].item()
             
             while any(budget > 0 for budgets in budgets.values()):
                 for k in self.weights.keys():
                     # TODO: WORK OUT HOW SURE EACH ACQUISITION FUNCTION IS ON ITS RESULT
                     match k:
                         case "diminishing_stability" if self.weights[k][0] <= r < self.weights[k][1]:
-                            a = a_EI_max(mx[1], X_grid, mu, varSigma)
+                            a = a_EI_max(mx[1], X_grid, mu_r, varSigma_r)
                             m = max(a)
                             x = X_grid[np.where(a == m)[0].item()]
                             sample = simulations.analytic.run(hull, simulations.Params(x))
@@ -84,7 +85,7 @@ class Aggregator:
                             adjust_budgets(budgets, k, sample.cost)
                             
                         case "tipping_point" if self.weights[k][0] <= r < self.weights[k][1]:
-                            a = a_SC(mx[0], X_grid, mu, varSigma)
+                            a = a_SC(mx[0], X_grid, mu_r, varSigma_r)
                             m = max(a)
                             x = X_grid[np.where(a == m)[0].item()]
                             sample = simulations.analytic.run(hull, simulations.Params(x))
@@ -103,7 +104,7 @@ class Aggregator:
                                 case "overall_buoyancy":
                                     moments = False
                                     bounds = (0, np.pi)
-                            a = a_INT(bounds, X_grid, mu, varSigma, moments)
+                            a = a_INT(bounds, X_grid, mu_r if moments else mu_b, varSigma_r if moments else varSigma_b)
                             m = max(a)
                             x = X_grid[np.where(a == m)[0].item()]
                             sample = simulations.analytic.run(hull, simulations.Params(x))
@@ -112,20 +113,20 @@ class Aggregator:
                             
                         case "initial_stability":
                             x = X_grid[1]
-                            initial_stability = mu[x][0] if varSigma[1][0] == 0 else \
+                            initial_stability = mu_r[x][0] if varSigma_r[1][0] == 0 else \
                                 simulations.analytic.run(hull, simulations.Params(x)).righting_moment_heel()
                             adjust_budgets(budgets, k, budgets[k])
                             
                         case "initial_buoyancy":
                             x = 0
-                            initial_buoyancy = mu[x][3] if varSigma[1][3] == 0 else \
+                            initial_buoyancy = mu_b[x][0] if varSigma_b[1][0] == 0 else \
                             simulations.analytic.run(hull, simulations.Params(x)).reserve_buoyancy
                             adjust_budgets(budgets, k, budgets[k])
 
         # I use root_estimate here because, root may be wildly inaccurate for low budgets or when tipping point is not a priority
-        overall_stability = sum(mu[np.where(X_grid < root_estimate)][:,0])*X_grid[1]
-        righting_energy = sum(mu[np.where(X_grid > root_estimate)][:,0])*X_grid[1]
-        overall_buoyancy = sum(mu[:,3])*X_grid[1]
+        overall_stability = sum(mu_r[np.where(X_grid < root_estimate)][:,0])*X_grid[1]
+        righting_energy = sum(mu_r[np.where(X_grid > root_estimate)][:,0])*X_grid[1]
+        overall_buoyancy = sum(mu_b[:,0])*X_grid[1]
         result = {
             "overall_stability": overall_stability,
             "initial_stability": initial_stability,

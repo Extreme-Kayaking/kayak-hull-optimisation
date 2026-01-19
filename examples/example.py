@@ -134,7 +134,7 @@ class GP_Result:
 
 user_weights = WeightSelector(column_order, GP_Result).run()
 
-aggregator = Aggregator(user_weights, [gp_righting, gp_buoyancy], column_order)
+aggregator = Aggregator(user_weights, gp_righting, gp_buoyancy, column_order)
 f = aggregator.f
 
 best_params, best_dict, best_score = optimise(f, Constraints())
