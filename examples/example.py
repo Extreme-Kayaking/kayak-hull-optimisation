@@ -101,8 +101,10 @@ if not os.path.exists(DATA_PATH):
     # Second step: We run a simulation for a given heel angle:
     for idx, hull in enumerate(hulls):
         print("Simulating random hull: " + str(idx))
-        for k in range(62):
-            result = run(hull, Params(heel=0.1*k))
+        r = np.random.random()*62
+        for k in range(r):
+            heel = np.random.random()*5*np.pi - 3*np.pi
+            result = run(hull, Params(heel=heel))
 
     
 X_full, y_full, column_order = load_simulation_data(DATA_PATH)
