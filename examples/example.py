@@ -126,7 +126,7 @@ if os.path.exists(RIGHTING_MODEL_PATH):
         gp_righting = pickle.load(f)
 else:
     print("Training Batch 1 (Righting)...")
-    gps = [GaussianProcessSurrogate(ConfigurablePhysicsKernel(KC), ZeroMeanPrior()) for KC in (KERNEL_CONFIG_HYDRO_PROD, KERNEL_CONFIG_HYDRO_SUM, KERNEL_CONFIG_HYDRO_PERIODIC, KERNEL_CONFIG_MATERN, KERNEL_CONFIG_RBF, KERNEL_CONFIG_LINEAR)]
+    gps = [GaussianProcessSurrogate(ConfigurablePhysicsKernel(KC), ZeroMeanPrior()) for KC in (KERNEL_CONFIG_HYDRO_PROD, KERNEL_CONFIG_HYDRO_SUM, KERNEL_CONFIG_MATERN, KERNEL_CONFIG_RBF, KERNEL_CONFIG_LINEAR)]
     
     compare_models({"HYDRO_PROD": gps[0], "HYDRO_SUM": gps[1], "HYDRO_PERIODIC": gps[2], "MATERN": gps[3], "RBF": gps[4], "LINEAR": gps[5]},
         X_train, y_train[:, :1], X_test, y_test[:, :1], column_order)

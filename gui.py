@@ -68,7 +68,7 @@ class WeightSelector:
         header_frame = ctk.CTkFrame(app)
         header_frame.pack(fill="x", padx=20, pady=20)
         
-        header = ctk.CTkLabel(header_frame, text=f"Configure: {self.target_class.__name__}", font=("Roboto", 20, "bold"))
+        header = ctk.CTkLabel(header_frame, text=f"Configure: Priorities", font=("Roboto", 20, "bold"))
         header.pack(pady=5)
         sub = ctk.CTkLabel(header_frame, text="Set importance (0=Ignore, 10=Critical)", text_color="gray")
         sub.pack(pady=(0, 5))

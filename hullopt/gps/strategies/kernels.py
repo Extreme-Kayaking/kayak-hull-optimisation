@@ -3,6 +3,7 @@ import GPy
 from .interfaces import KernelStrategy
 from typing import Dict, Any, List, Union
 from collections import defaultdict
+import numpy as np
 class ConfigurablePhysicsKernel(KernelStrategy):
 
 
@@ -17,7 +18,7 @@ class ConfigurablePhysicsKernel(KernelStrategy):
         This allows periodicity that can evolve/decay over distance.
         """
         # Periodic base (Strict repetition)
-        kp = GPy.kern.StdPeriodic(input_dim=input_dim, active_dims=active_dims, name=f"{name}_p")
+        kp = GPy.kern.StdPeriodic(input_dim=input_dim, active_dims=active_dims, period=2*np.pi, name=f"{name}_p")
         
         # Matern decay (Allows the pattern to change shape over long distances)
         km = GPy.kern.Matern52(input_dim=input_dim, active_dims=active_dims, name=f"{name}_m", ARD=ARD)
@@ -31,7 +32,7 @@ class ConfigurablePhysicsKernel(KernelStrategy):
         This allows periodicity that can evolve/decay over distance.
         """
         # Periodic base (Strict repetition)
-        kp = GPy.kern.StdPeriodic(input_dim=input_dim, active_dims=active_dims, name=f"{name}_p")
+        kp = GPy.kern.StdPeriodic(input_dim=input_dim, active_dims=active_dims, period=2*np.pi, name=f"{name}_p")
         
         # Matern decay (Allows the pattern to change shape over long distances)
         km = GPy.kern.Matern52(input_dim=input_dim, active_dims=active_dims, name=f"{name}_m", ARD=ARD)
@@ -92,7 +93,8 @@ class ConfigurablePhysicsKernel(KernelStrategy):
                     sub_k = kern_cls(
                         input_dim=1, 
                         active_dims=[idx], 
-                        name=f"{phys_key}_{i}"
+                        name=f"{phys_key}_{i}",
+                        period=2*np.pi,
                     )
                     kernels.append(sub_k)
             
