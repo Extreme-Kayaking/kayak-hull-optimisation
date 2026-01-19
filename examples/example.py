@@ -18,11 +18,10 @@ from hullopt.optimise import optimise
 from hullopt.hull import Hull
 
 
-
-
 # Configuration variables here
 DATA_PATH = "gp_data.pkl"
-MODEL_PATH = "models/boat_gp.pkl"
+BUOYANCY_MODEL_PATH = "models/boat_buoyancy_gp.pkl"
+RIGHTING_MODEL_PATH = "models/boat_righting_gp.pkl"
 KERNEL_CONFIG_HYDRO_PROD = {"length": "rbf",
                  "beam": "rbf",
                  "depth": "rbf",
@@ -68,48 +67,58 @@ KERNEL_CONFIG_RBF = {"length": "rbf",
                  "heel": "rbf" }
 
 
-if not os.path.exists(MODEL_PATH):
-    # Initial data gathering for GP
-    if not os.path.exists(DATA_PATH):
-        print(os.getcwd())
-        from hullopt.hull.utils import generate_random_hulls
-        from hullopt.config.defaults import dummy_hull
-        
-        from hullopt.simulations.params import Params
-        from hullopt.simulations.analytic import run
-        hulls = generate_random_hulls(n=100, cockpit_opening=False, seed=42)
-        # Second step: We run a simulation for a given heel angle:
-        for idx, hull in enumerate(hulls):
-            print("Simulating random hull: " + str(idx))
-            for k in range(62):
-                result = run(hull, Params(heel=0.1*k))
+# Initial data gathering for GP
+if not os.path.exists(DATA_PATH):
+    print(os.getcwd())
+    from hullopt.hull.utils import generate_random_hulls
+    from hullopt.config.defaults import dummy_hull
+    
+    from hullopt.simulations.params import Params
+    from hullopt.simulations.analytic import run
+    hulls = generate_random_hulls(n=100, cockpit_opening=False, seed=42)
+    # Second step: We run a simulation for a given heel angle:
+    for idx, hull in enumerate(hulls):
+        print("Simulating random hull: " + str(idx))
+        for k in range(62):
+            result = run(hull, Params(heel=0.1*k))
 
-        
-    X_full, y_full, column_order = load_simulation_data(DATA_PATH)
+    
+X_full, y_full, column_order = load_simulation_data(DATA_PATH)
 
-    X_train, X_test, y_train, y_test = train_test_split(
-            X_full, y_full, test_size=0.2, random_state=42
-
-        )
-    gps = [GaussianProcessSurrogate(ConfigurablePhysicsKernel(KERNEL_CONFIG), ZeroMeanPrior()) for KERNEL_CONFIG in (KERNEL_CONFIG_HYDRO_PROD, KERNEL_CONFIG_HYDRO_SUM, KERNEL_CONFIG_MATERN, KERNEL_CONFIG_RBF)]
-
-    rmse = compare_models({"HYDRO_PROD": gps[0],
-                           "HYDRO_SUM": gps[1],
-                           "MATERN": gps[2],
-                           "RBF": gps[3] },
-        X_train,
-        y_train,
-        X_test,
-        y_test,
-        column_order,
+X_train, X_test, y_train, y_test = train_test_split(
+        X_full, y_full, test_size=0.2, random_state=42
     )
-    gps[0].save(MODEL_PATH)
-    print(f"Initial GP RMSE: {rmse}")
 
+# --- Batch 1: Righting (First 3 cols) ---
+if os.path.exists(RIGHTING_MODEL_PATH):
+    print(f"Loading {RIGHTING_MODEL_PATH}...")
+    with open(RIGHTING_MODEL_PATH, 'rb') as f:
+        gp_righting = pickle.load(f)
 else:
-    with open(MODEL_PATH, 'rb') as f:
-        gp: GaussianProcessSurrogate = pickle.load(f)
-    _, _, column_order = load_simulation_data(DATA_PATH)
+    print("Training Batch 1 (Righting)...")
+    gps = [GaussianProcessSurrogate(ConfigurablePhysicsKernel(KC), ZeroMeanPrior()) for KC in (KERNEL_CONFIG_HYDRO_PROD, KERNEL_CONFIG_HYDRO_SUM, KERNEL_CONFIG_MATERN, KERNEL_CONFIG_RBF)]
+    
+    compare_models({"HYDRO_PROD": gps[0], "HYDRO_SUM": gps[1], "MATERN": gps[2], "RBF": gps[3]},
+        X_train, y_train[:, :3], X_test, y_test[:, :3], column_order)
+        
+    gp_righting = gps[0]
+    gp_righting.save(RIGHTING_MODEL_PATH)
+
+
+# --- Batch 2: Buoyancy (Last 2 cols) ---
+if os.path.exists(BUOYANCY_MODEL_PATH):
+    print(f"Loading {BUOYANCY_MODEL_PATH}...")
+    with open(BUOYANCY_MODEL_PATH, 'rb') as f:
+        gp_buoyancy = pickle.load(f)
+else:
+    print("Training Batch 2 (Buoyancy)...")
+    gps = [GaussianProcessSurrogate(ConfigurablePhysicsKernel(KC), ZeroMeanPrior()) for KC in (KERNEL_CONFIG_HYDRO_PROD, KERNEL_CONFIG_HYDRO_SUM, KERNEL_CONFIG_MATERN, KERNEL_CONFIG_RBF)]
+    
+    compare_models({"HYDRO_PROD": gps[0], "HYDRO_SUM": gps[1], "MATERN": gps[2], "RBF": gps[3]},
+        X_train, y_train[:, -2:], X_test, y_test[:, -2:], column_order)
+        
+    gp_buoyancy = gps[0]
+    gp_buoyancy.save(BUOYANCY_MODEL_PATH)
 
 
 @dataclass
@@ -123,16 +132,10 @@ class GP_Result:
     initial_buoyancy: float
 
 
-
 user_weights = WeightSelector(column_order, GP_Result).run()
 
-
-
-
-aggregator = Aggregator(user_weights, gp, column_order)
+aggregator = Aggregator(user_weights, [gp_righting, gp_buoyancy], column_order)
 f = aggregator.f
-
-
 
 best_params, best_dict, best_score = optimise(f, Constraints())
 
