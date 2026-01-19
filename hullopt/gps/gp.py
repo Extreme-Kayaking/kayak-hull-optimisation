@@ -78,7 +78,8 @@ class GaussianProcessSurrogate:
         
 if __name__ == "__main__":   
     from strategies.compare import compare_models    
-    from strategies.kernels import HydroPhysicsKernel, StandardMaternKernel, ConfigurablePhysicsKernel, RBFKernel
+    from strategies.kernels import HydroPhysicsKernel, StandardMaternKernel, ConfigurablePhysicsKernel
+    from collections import defaultdict
     from strategies.priors import HydrostaticBaselinePrior, ZeroMeanPrior
     from utils import load_simulation_data
 
@@ -96,11 +97,16 @@ if __name__ == "__main__":
     p_strat = HydrostaticBaselinePrior(column_order)
     z_strat = ZeroMeanPrior()
 
-    kernel_config_dict = {"rocker_bow": "matern52", "heel": "periodic" }
+    periodicmatern_dict = defaultdict(lambda: "periodic_matern")
+    standarddict = defaultdict(lambda: "rbf")
+    materndict = defaultdict(lambda: "matern52")
+
+
 
     models_to_compare = {
-        "HydroPhysics": GaussianProcessSurrogate(ConfigurablePhysicsKernel(kernel_config_dict), z_strat),
-        "Standard Everything": GaussianProcessSurrogate(StandardMaternKernel(), z_strat),
+        "Periodic Matern": GaussianProcessSurrogate(ConfigurablePhysicsKernel(periodicmatern_dict), z_strat),
+        "Standard RBF": GaussianProcessSurrogate(ConfigurablePhysicsKernel(standarddict), z_strat),
+        "Standard Matern": GaussianProcessSurrogate(ConfigurablePhysicsKernel(materndict), z_strat),
 
     }
 
