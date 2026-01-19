@@ -168,5 +168,7 @@ aggregator = Aggregator(user_weights, gp_righting, gp_buoyancy, column_order)
 f = aggregator.f
 
 best_params, best_dict, best_score = optimise(f, Constraints(), time=1)
+print("Optimised!!")
 
 visualizer = ResultVisualizer(best_params, best_dict, best_score, Hull)
+visualizer.run()
