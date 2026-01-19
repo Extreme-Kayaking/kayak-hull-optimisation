@@ -90,12 +90,3 @@ f = aggregator.f
 best_params, best_dict, best_score = optimise(f, Constraints())
 
 visualizer = ResultVisualizer(best_params, best_dict, best_score, Hull)
-
-
-
-
-
-
-
-
-
