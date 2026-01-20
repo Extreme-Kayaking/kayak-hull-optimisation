@@ -78,9 +78,10 @@ def optimise(F, Constraint: Constraints, time=1) -> Params:
         import traceback
         try:
             score, dic = F(Hull(current_params))
-            if score > best_score:
+            if score > hullopt.optimise.best_score:
                 hullopt.optimise.best_score = score
                 hullopt.optimise.best_dict = dic
+
             return score
         except Exception as e:
             traceback.print_exc()
@@ -114,7 +115,7 @@ def optimise(F, Constraint: Constraints, time=1) -> Params:
         cockpit_length=best_trial.params["cockpit_length"],
         cockpit_width=best_trial.params["cockpit_width"],
         cockpit_position=best_trial.params["cockpit_position"],
-        cockpit_opening=False
+        cockpit_opening=True
     )
     
     return best_params

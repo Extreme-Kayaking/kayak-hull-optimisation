@@ -15,10 +15,14 @@ class Constraints:
               rocker_stern_range: tuple[float, float]=(0.05, 0.35),
               rocker_position_range: tuple[float, float]=(0.35, 0.60),
               rocker_exponent_range: tuple[float, float]=(2.0, 4.0),
-              # Cockpit parameter bounds
+              # Cockpit parameter bounds (absolute - for validation only)
               cockpit_length_range: tuple[float, float] = (0.40, 1.20),
               cockpit_width_range: tuple[float, float] = (0.35, 0.55),
               cockpit_position_range: tuple[float, float] = (0.45, 0.55),
+
+              # Cockpit scaling ratios (for generation)
+              cockpit_length_ratio_range: tuple[float, float] = (0.25, 0.35),  # % of hull length
+              cockpit_width_ratio_range: tuple[float, float] = (0.70, 0.85),   # % of beam width
 
               # Ratio parameter bounds
               length_to_beam_ratio_range: tuple[float, float] = (3.0, 7.5),
@@ -47,6 +51,8 @@ class Constraints:
     self.cockpit_length_range = cockpit_length_range
     self.cockpit_width_range = cockpit_width_range
     self.cockpit_position_range = cockpit_position_range
+    self.cockpit_length_ratio_range = cockpit_length_ratio_range
+    self.cockpit_width_ratio_range = cockpit_width_ratio_range
 
   def check_hull(self, hull):
     # Check hull satisfies constraints
