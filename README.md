@@ -1,6 +1,9 @@
 # kayak-hull-optimisation
 Efficiently optimising a kayak hull under constant fluid flows for a customisable compound metric assessing hydrodynamicity, stability, and buoyancy using Gaussian Processes. 
 
+## User Interface
+![alt text](image.png)
+
 ## Method
 ### User Inputs
 - Hull Parameter Constraints
