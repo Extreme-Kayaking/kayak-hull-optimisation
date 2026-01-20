@@ -114,7 +114,7 @@ def optimise(F, Constraint: Constraints, time=1) -> Params:
         cockpit_length=best_trial.params["cockpit_length"],
         cockpit_width=best_trial.params["cockpit_width"],
         cockpit_position=best_trial.params["cockpit_position"],
-        cockpit_opening=False
+        cockpit_opening=True
     )
     
     return best_params
