@@ -168,7 +168,7 @@ user_weights = WeightSelector(GP_Result).run()
 aggregator = Aggregator(user_weights, gp_righting, gp_buoyancy, column_order)
 f = aggregator.f
 
-best_params = optimise(f, Constraints(), time=10)
+best_params = optimise(f, Constraints(), time=user_weights["simulation_time"])
 print("Optimised!!")
 
 visualizer = ResultVisualizer(best_params, hullopt.optimise.best_dict, hullopt.optimise.best_score, Hull)

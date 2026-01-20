@@ -35,6 +35,7 @@ class WeightSelector:
         label.grid(row=row_idx, column=0, padx=20, pady=10, sticky="w")
 
         val_var = ctk.IntVar(value=0)
+        self.sliders[param_name] = val_var
         
 
         val_label = ctk.CTkLabel(parent, text="0", width=30, font=("Roboto Mono", 14))
@@ -69,7 +70,7 @@ class WeightSelector:
         header_frame = ctk.CTkFrame(app)
         header_frame.pack(fill="x", padx=20, pady=20)
         
-        header = ctk.CTkLabel(header_frame, text=f"Configure: {self.target_class.__name__}", font=("Roboto", 20, "bold"))
+        header = ctk.CTkLabel(header_frame, text=f"Configure Priorities", font=("Roboto", 20, "bold"))
         header.pack(pady=5)
         sub = ctk.CTkLabel(header_frame, text="Set importance (0=Ignore, 10=Critical)", text_color="gray")
         sub.pack(pady=(0, 5))
@@ -80,6 +81,7 @@ class WeightSelector:
         for idx, param in enumerate(self.params):
             self._create_row(scroll_frame, param, idx)
         self._create_row(scroll_frame, "Simulation Speed", len(self.params))
+        self.sliders["simulation_speed"] = ctk.IntVar(value=0)
 
 
         def on_confirm():
@@ -268,11 +270,11 @@ if __name__ == "__main__":
     class GP_Result:
         overall_stability: float
         initial_stability: float
-        righting_energy: float
+        diminishing_stability: float
         tipping_point: float
+        righting_energy: float
         overall_buoyancy: float
         initial_buoyancy: float
-    
     # print("--- Step 1: Weight Selector ---")
     # gui_weights = WeightSelector(GP_Result)
     # weights = gui_weights.run()
@@ -287,6 +289,7 @@ if __name__ == "__main__":
     liste = [1,2,3,4]
 
     asking_widget = WeightSelector(GP_Result).run()
+    print(asking_widget.keys())
     # Launch the visualizer
     visualizer = ResultVisualizer(optimal_params,  {"Speed":10,"Steerability": 2,"Druggability": 3}, final_score, MockHull)
     visualizer.run()
