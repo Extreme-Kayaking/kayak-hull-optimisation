@@ -31,6 +31,17 @@ def generate_random_hulls(n: int, cockpit_opening: bool = False, seed: int = 42)
                                             min(rocker_bow, constraints.rocker_stern_range[1]))
             hull_thickness = np.random.uniform(*constraints.hull_thickness_range)
             
+            # Scale cockpit dimensions proportionally to hull size
+            # Use ratios from constraints for consistency
+            cockpit_length_ratio = np.random.uniform(*constraints.cockpit_length_ratio_range)
+            cockpit_length = cockpit_length_ratio * length
+            
+            cockpit_width_ratio = np.random.uniform(*constraints.cockpit_width_ratio_range)
+            cockpit_width = cockpit_width_ratio * beam
+            
+            # Cockpit position: slight variation around center
+            cockpit_position = np.random.uniform(*constraints.cockpit_position_range)
+            
             # Check if ratios are satisfied
             length_to_beam = length / beam
             beam_to_depth = beam / depth
@@ -56,9 +67,9 @@ def generate_random_hulls(n: int, cockpit_opening: bool = False, seed: int = 42)
                     rocker_position=rocker_position,
                     rocker_exponent=rocker_exponent,
                     cockpit_opening=cockpit_opening,
-                    cockpit_length=0.8,
-                    cockpit_width=0.6,
-                    cockpit_position=0.5
+                    cockpit_length=cockpit_length,
+                    cockpit_width=cockpit_width,
+                    cockpit_position=cockpit_position
                 )
                 try:
                     hull = Hull(params)
