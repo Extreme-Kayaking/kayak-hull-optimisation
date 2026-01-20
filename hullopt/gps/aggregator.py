@@ -6,6 +6,8 @@ from typing import Tuple
 from scipy.stats import norm
 import numpy as np
 
+from copy import deepcopy
+
 # Expected Improvement to find the maximum
 def a_EI_max(f_star, Xs, mu, varSigma):
     alpha = np.zeros(mu[0].shape)
@@ -34,11 +36,17 @@ class Aggregator:
             tot += user_weights[k]
             self.weights[k] = [prev_tot, tot]
         self.tot = tot
+        self._weights_mut = None
+        self._tot_mut = None
+        print(self.weights)
+        print(self.tot)
         self.gp_righting = gp_righting
         self.gp_buoyancy = gp_buoyancy
         self.column_order = column_order
 
     def f(self, hull: Hull, budget: int = 180) -> Tuple[float, dict]:
+        self._weights_mut = deepcopy(self.weights)
+        self._tot_mut = self.tot
         def add_hull_params(x):
             def f(k):
                 match k:
@@ -64,26 +72,26 @@ class Aggregator:
         def adjust_budgets(budgets, k, cost):
             budgets[k] -= cost
             if budgets[k] <= 0:
-                diff = self.weights[k][1] - self.weights[k][0]
-                self.tot -= diff
+                diff = self._weights_mut[k][1] - self._weights_mut[k][0]
+                self._tot_mut -= diff
                 for k2 in budgets.keys():
-                    if self.weights[k2][0] >= self.weights[k][0]:
-                        if not k2 == k: self.weights[k2][0] -= diff
-                        self.weights[k2][1] -= diff
+                    if self._weights_mut[k2][0] >= self._weights_mut[k][0]:
+                        if not k2 == k: self._weights_mut[k2][0] -= diff
+                        self._weights_mut[k2][1] -= diff
 
         mu_r, varSigma_r = self.gp_righting.predict(X_grid)
         mu_b, varSigma_b = self.gp_buoyancy.predict(X_grid)
         heel_index = self.column_order.index("heel")
-        r = np.random.random() * self.tot
-        budgets = {k: (self.weights[k][1]-self.weights[k][0])/self.tot * budget for k in self.weights.keys()}
+        r = np.random.random() * self._tot_mut
+        budgets = {k: (self._weights_mut[k][1]-self._weights_mut[k][0])/self._tot_mut * budget for k in self._weights_mut.keys()}
             
         while any(budget > 0 for budget in budgets.values()):
             print(f"Aggregator Budgets: {budgets}")
             root_estimate = X_heels[np.where(mu_r[:-1]*mu_r[1:] < 0)[0][0]]
-            for k in self.weights.keys():
+            for k in self._weights_mut.keys():
                 # TODO: WORK OUT HOW SURE EACH ACQUISITION FUNCTION IS ON ITS RESULT (to optimise by terminating early)
                 match k:
-                    case "diminishing_stability" if self.weights[k][0] <= r < self.weights[k][1]:
+                    case "diminishing_stability" if self._weights_mut[k][0] <= r < self._weights_mut[k][1]:
                         a = a_EI_max(mx[1], X_heels, mu_r, varSigma_r)
                         x = X_heels[np.argmax(a)]
                         sample = simulations.analytic.run(hull, simulations.Params(x))
@@ -91,7 +99,7 @@ class Aggregator:
                         update(mx[0], sample)
                         adjust_budgets(budgets, k, sample.cost)
                             
-                    case "tipping_point" if self.weights[k][0] <= r < self.weights[k][1]:
+                    case "tipping_point" if self._weights_mut[k][0] <= r < self._weights_mut[k][1]:
                         a = a_SC(mx[0], X_heels, mu_r, varSigma_r)
                         x = X_heels[np.argmax(a)]
                         sample = simulations.analytic.run(hull, simulations.Params(x))
@@ -100,7 +108,7 @@ class Aggregator:
                         adjust_budgets(budgets, k, sample.cost)
                             
                     case "overall_stability" | "righting_energy" | "overall_buoyancy"\
-                         if self.weights[k][0] <= r < self.weights[k][1]:
+                         if self._weights_mut[k][0] <= r < self._weights_mut[k][1]:
                         bounds = (0,0)
                         moments = True
                         match k:
@@ -129,20 +137,20 @@ class Aggregator:
 
         # I use root_estimate here because, root may be wildly inaccurate for low budgets or when tipping point is not a priority
         overall_stability = sum(mu_r[np.where(X_heels < root_estimate)][:,0])*X_heels[1]
-        righting_energy = sum(mu_r[np.where(X_heels > root_estimate)][:,0])*X_heels[1]
+        righting_energy = sum(mu_r[np.where([2*np.pi - root_estimate >= x > root_estimate for x in X_heels])][:,0])*X_heels[1]
         overall_buoyancy = sum(mu_b[:,0])*X_heels[1]
         result = {
-            "overall_stability": overall_stability,
+            "overall_stability": np.abs(overall_stability),
             "initial_stability": initial_stability,
-            "righting_energy": righting_energy,
-            "tipping_point": root_estimate,
+            "righting_energy": -np.abs(righting_energy),
+            "tipping_point": root_estimate % np.pi,
             "overall_buoyancy": overall_buoyancy,
             "initial_buoyancy": initial_buoyancy
         }
         print(result)
         aggregate = 0
         for k, norm in config.hyperparameters.weight_normalisers.items():
-            aggregate += np.abs(result[k]) * (self.weights[k][1] - self.weights[k][0]) / (norm * self.tot)
+            aggregate += result[k] * (self.weights[k][1] - self.weights[k][0]) / (norm * self.tot)
         print(aggregate)
         return aggregate, result
                         
