@@ -18,6 +18,7 @@ class WeightSelector:
         self.target_class = target_class
         self.title_text = title
         self.sliders = {}  
+     
         self.final_weights = {}
         
         if hasattr(target_class, "__dataclass_fields__"):
@@ -34,7 +35,7 @@ class WeightSelector:
         label.grid(row=row_idx, column=0, padx=20, pady=10, sticky="w")
 
         val_var = ctk.IntVar(value=0)
-        self.sliders[param_name] = val_var
+        
 
         val_label = ctk.CTkLabel(parent, text="0", width=30, font=("Roboto Mono", 14))
         val_label.grid(row=row_idx, column=2, padx=(10, 20), pady=10)
@@ -68,7 +69,7 @@ class WeightSelector:
         header_frame = ctk.CTkFrame(app)
         header_frame.pack(fill="x", padx=20, pady=20)
         
-        header = ctk.CTkLabel(header_frame, text=f"Configure: Priorities", font=("Roboto", 20, "bold"))
+        header = ctk.CTkLabel(header_frame, text=f"Configure: {self.target_class.__name__}", font=("Roboto", 20, "bold"))
         header.pack(pady=5)
         sub = ctk.CTkLabel(header_frame, text="Set importance (0=Ignore, 10=Critical)", text_color="gray")
         sub.pack(pady=(0, 5))
@@ -78,6 +79,8 @@ class WeightSelector:
         
         for idx, param in enumerate(self.params):
             self._create_row(scroll_frame, param, idx)
+        self._create_row(scroll_frame, "Simulation Speed", len(self.params))
+
 
         def on_confirm():
             for param, var in self.sliders.items():
@@ -281,7 +284,9 @@ if __name__ == "__main__":
     # Create fake optimal data
     optimal_params = Params() # Uses defaults defined above
     final_score = 0.8742 # Example flow score
-    
+    liste = [1,2,3,4]
+
+    asking_widget = WeightSelector(GP_Result).run()
     # Launch the visualizer
     visualizer = ResultVisualizer(optimal_params,  {"Speed":10,"Steerability": 2,"Druggability": 3}, final_score, MockHull)
     visualizer.run()
