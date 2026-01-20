@@ -98,7 +98,7 @@ if not os.path.exists(DATA_PATH):
     
     from hullopt.simulations.params import Params
     from hullopt.simulations.analytic import run
-    hulls = generate_random_hulls(n=100, cockpit_opening=False, seed=42)
+    hulls = generate_random_hulls(n=100, cockpit_opening=True, seed=42)
     # Second step: We run a simulation for a given heel angle:
     for idx, hull in enumerate(hulls):
         print("Simulating random hull: " + str(idx))
