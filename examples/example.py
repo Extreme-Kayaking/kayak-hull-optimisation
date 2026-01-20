@@ -103,7 +103,7 @@ if not os.path.exists(DATA_PATH):
     for idx, hull in enumerate(hulls):
         print("Simulating random hull: " + str(idx))
         r = np.random.random()*62
-        for k in range(r):
+        for k in range(int(r)):
             heel = np.random.random()*5*np.pi - 3*np.pi
             result = run(hull, Params(heel=heel))
 
@@ -129,7 +129,7 @@ if os.path.exists(RIGHTING_MODEL_PATH):
         gp_righting = GaussianProcessSurrogate(model=pickle.load(f))
 else:
     print("Training Batch 1 (Righting)...")
-    gps = [GaussianProcessSurrogate(ConfigurablePhysicsKernel(KC), ZeroMeanPrior()) for KC in (KERNEL_CONFIG_HYDRO_PROD, KERNEL_CONFIG_HYDRO_SUM, KERNEL_CONFIG_MATERN, KERNEL_CONFIG_RBF, KERNEL_CONFIG_LINEAR)]
+    gps = [GaussianProcessSurrogate(ConfigurablePhysicsKernel(KC), ZeroMeanPrior()) for KC in (KERNEL_CONFIG_HYDRO_PROD, KERNEL_CONFIG_HYDRO_SUM, KERNEL_CONFIG_PERIODIC, KERNEL_CONFIG_MATERN, KERNEL_CONFIG_RBF, KERNEL_CONFIG_LINEAR)]
     
     compare_models({"HYDRO_PROD": gps[0], "HYDRO_SUM": gps[1], "HYDRO_PERIODIC": gps[2], "MATERN": gps[3], "RBF": gps[4], "LINEAR": gps[5]},
         X_train, y_train[:, :1], X_test, y_test[:, :1], column_order)
