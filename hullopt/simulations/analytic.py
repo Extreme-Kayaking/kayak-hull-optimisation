@@ -107,7 +107,7 @@ def _scene_draught(mesh: Trimesh, draught: float) -> Scene:
   submerged = trimesh.intersections.slice_mesh_plane(mesh, [0,0,-1], [0,0,draught], cap=True)
 
   air_pockets = []
-  water_box = trimesh.creation.box(bounds=[submerged.bounds[0] * 1.1, submerged.bounds[1] * [1.1,1.1,1]])
+  water_box = trimesh.creation.box(bounds=[mesh.bounds[0] * 1.1, mesh.bounds[1] * [1.1,1.1,0] + [0,0,draught]])
   # Calculate water/air meshes around the boat
   water_diff: Trimesh = trimesh.boolean.difference([water_box, mesh], engine='blender') # Note: Must use blender to ensure correct volume calculations (manifold3d or it's integration in Trimesh is bugged)
   pockets = water_diff.split()  # Get all pockets
