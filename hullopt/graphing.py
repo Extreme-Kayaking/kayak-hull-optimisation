@@ -120,7 +120,8 @@ def plot_pickle(hull_index = 0):
                              cost = 0,
                              scene = None)
           for d in data]
-    print(len(heels))
+    print(f"Hull params: {seen[-1]}")
+    print(f"{len(heels)} samples")
     plot_heels(heels, rs)
 
 def view_pickle(hull_index = 0, heel = 0):
@@ -145,7 +146,9 @@ def view_pickle(hull_index = 0, heel = 0):
 
     param_names = list(filter(lambda x: x != "cost" and x != "heel", column_order))
     hull_params = {k: v for (k,v) in zip(param_names, seen[-1])}
+    hull_params["cockpit_opening"] = hull_params["cockpit_opening"] == 1.0    # Why is this stored / loading as a float?
     hull_obj = Hull(hullopt.ParamsHull(**hull_params))
+    print(f"Hull params: {hullopt.ParamsHull(**hull_params)}")
     simulations.analytic.run(hull_obj, simulations.Params(heel)).scene.show()
 
 def resimulate_pickle(hull_index = 0):
@@ -170,5 +173,7 @@ def resimulate_pickle(hull_index = 0):
 
     param_names = list(filter(lambda x: x != "cost" and x != "heel", column_order))
     hull_params = {k: v for (k,v) in zip(param_names, seen[-1])}
+    hull_params["cockpit_opening"] = hull_params["cockpit_opening"] == 1.0
+    # Why is this stored / loading as a float?
     hull_obj = Hull(hullopt.ParamsHull(**hull_params))
     plot_simulation(simulations.analytic, hull_obj)
