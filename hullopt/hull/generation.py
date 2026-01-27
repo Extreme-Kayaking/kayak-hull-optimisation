@@ -151,7 +151,7 @@ def add_cockpit_to_hull(mesh: Trimesh, length: float, cockpit_length: float, coc
 
     # Boolean subtract
     try:
-        out = mesh.difference(cutter, engine="manifold")
+        out = mesh.difference(cutter, engine="blender")
     except Exception:
         out = mesh.difference(cutter)
 
