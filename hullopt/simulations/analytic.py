@@ -25,6 +25,7 @@ def _iterate_draught(mesh: Trimesh, hull_density: float) -> Tuple[int, float]:
   """
   def required_buoyancy(draught: float):
     _, displacement, _ = _calculate_centre_buoyancy_and_displacement(mesh, draught)
+    print(f"Solving draught {draught}: {(mesh.volume * hull_density - displacement)}", end="\r")
     return mesh.volume * hull_density - displacement
 
   lower = mesh.bounds[0][2] + 0.001 # 1mm buffer. TODO: switch to be in terms of draught_threshold
@@ -83,12 +84,16 @@ def _reserve_buoyancy(mesh: Trimesh, hull_density: float, draught):
   upper = mesh.bounds[1][2]
   f = _compose(lambda t: -t[1],
               partial(_calculate_centre_buoyancy_and_displacement, mesh))
+  def g(x):
+    r = f(x)
+    print(f"Solving Reserve Buoyancy (draught {x}): {r}", end="\r")
+    return r
   brute_threshold = (upper-lower) * config.hyperparameters.draught_threshold * 100 # TODO parameterise
   ranges = [slice(draught,upper, (upper - draught)/2 if brute_threshold > upper - draught else brute_threshold)]
-  best_draught = float(optimize.brute(f, ranges)[0])
+  best_draught = float(optimize.brute(g, ranges)[0])
   result = cast(optimize.OptimizeResult,
                 optimize.minimize_scalar(
-                  f,
+                  g,
                   bounds=(best_draught - brute_threshold, best_draught + brute_threshold),
                   options= {
                     'maxiter': config.hyperparameters.draught_max_iterations,
