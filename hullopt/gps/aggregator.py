@@ -103,10 +103,8 @@ class Aggregator:
             
             k = ""
             r = np.random.random() * self._tot_mut # For selecting acquisition func            
-            s = 0
             for k2 in self._weights_mut.keys():
-                s += self._weights_mut[k2]
-                if s > r:
+                if self._weights_mut[k2][0] <= r < self._weights_mut[k2][1]:
                     k = k2
                     break
 
