@@ -62,6 +62,8 @@ class Aggregator:
         initial_buoyancy = 0
 
         def update(x, sample, righting=True):
+            print("")
+            print(f"(Updating at: {x})")
             update_gp(self.gp_righting if righting else self.gp_buoyancy,
                       np.asarray([[x if k == "heel" else (getattr(hull.params, k) if k != "cost" else 0) for k in self.column_order]]),
                       np.asarray([sample.righting_moment]) if righting else\
