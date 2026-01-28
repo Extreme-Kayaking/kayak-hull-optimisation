@@ -120,7 +120,7 @@ class Aggregator:
             match k:
                 case "diminishing_stability":
                     a = a_EI_max(mx[1], X_heels, mu_r, varSigma_r)
-                    x = X_heels[np.random.choice(len(a), p=a/a.sum())]
+                    x = X_heels[np.random.choice(len(a), p=a/(a.sum() if a.sum() > 0 else 1))]
                     sample = simulations.analytic.run(hull, simulations.Params(x))
                     mx = (x, sample.righting_moment_heel())
                     update(mx[0], sample)
@@ -132,7 +132,7 @@ class Aggregator:
                     # Look for roots only exceeding our estimate of diminishing stability location
                     # TODO: More principled proabilistic ways to determine root estimate and diminishing stability estimates.
                     a = a_SC(diminishing_stability_estimate, X_heels, mu_r, varSigma_r)
-                    x = X_heels[np.random.choice(len(a), p=a/a.sum())]
+                    x = X_heels[np.random.choice(len(a), p=a/(a.sum() if a.sum() > 0 else 1))]
                     sample = simulations.analytic.run(hull, simulations.Params(x))
                     y = sample.righting_moment_heel()
                     update(x, sample)
@@ -150,7 +150,7 @@ class Aggregator:
                             moments = False
                             bounds = (0, np.pi)
                     a = a_INT(bounds, X_heels, mu_r if moments else mu_b, varSigma_r if moments else varSigma_b)
-                    x = X_heels[np.random.choice(len(a), p=a/a.sum())]
+                    x = X_heels[np.random.choice(len(a), p=a/(a.sum() if a.sum() > 0 else 1))]
                     sample = simulations.analytic.run(hull, simulations.Params(x))
                     update(x, sample)
                     adjust_budgets(budgets, k, sample.cost)
