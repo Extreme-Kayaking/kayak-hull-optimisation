@@ -125,7 +125,7 @@ def _scene_draught(mesh: Trimesh, draught: float) -> Scene:
 def run(hull: Hull, params: Params, use_cache: bool = True) -> Result:
   # temporary fix for weirdness in this range
   if 1.5 < params.heel < 2.8:
-    res = run(hull, Params(-params.heel))
+    res = run(hull, Params(-params.heel), use_cache=False)
     new_result = Result(
       righting_moment=(-1*res.righting_moment_heel(), res.righting_moment_pitch(), res.righting_moment_yaw()),
       reserve_buoyancy=res.reserve_buoyancy,
