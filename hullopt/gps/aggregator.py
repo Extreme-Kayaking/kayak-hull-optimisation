@@ -141,6 +141,7 @@ class Aggregator:
         result = {
             "overall_stability": np.abs(overall_stability),
             "initial_stability": initial_stability,
+            "diminishing_stability": mx[1],
             "righting_energy": -np.abs(righting_energy),
             "tipping_point": root_estimate % np.pi,
             "overall_buoyancy": overall_buoyancy,
