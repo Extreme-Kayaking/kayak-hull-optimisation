@@ -42,7 +42,9 @@ def update_gp(
     """
     try:
         # Exactly the logic from the loop (re-fitting with the new total set)
-        model.fit(X_new_total, y_new_total, column_order)
+        X_total = np.vstack([model.X_train, X_new_total])
+        y_total = np.vstack([model.y_train, y_new_total])
+        model.fit(X_total, y_total, column_order)
         
         if X_test is not None and y_test is not None:
             mu, _ = model.predict(X_test)
