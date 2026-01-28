@@ -78,61 +78,87 @@ class Aggregator:
                         if not k2 == k: self._weights_mut[k2][0] -= diff
                         self._weights_mut[k2][1] -= diff
 
-        mu_r, varSigma_r = self.gp_righting.predict(X_grid)
-        mu_b, varSigma_b = self.gp_buoyancy.predict(X_grid)
         heel_index = self.column_order.index("heel")
-        r = np.random.random() * self._tot_mut
         budgets = {k: (self._weights_mut[k][1]-self._weights_mut[k][0])/self._tot_mut * budget for k in self._weights_mut.keys()}
-            
+
+        import matplotlib.pyplot as plt
         while any(budget > 0 for budget in budgets.values()):
             print(f"Aggregator Budgets: {budgets}")
+            mu_r, varSigma_r = self.gp_righting.predict(X_grid)
+            mu_b, varSigma_b = self.gp_buoyancy.predict(X_grid)
+
             root_estimate = X_heels[np.where(mu_r[:-1]*mu_r[1:] < 0)[0][0]]
-            for k in self._weights_mut.keys():
-                # TODO: WORK OUT HOW SURE EACH ACQUISITION FUNCTION IS ON ITS RESULT (to optimise by terminating early)
-                match k:
-                    case "diminishing_stability" if self._weights_mut[k][0] <= r < self._weights_mut[k][1]:
-                        a = a_EI_max(mx[1], X_heels, mu_r, varSigma_r)
-                        x = X_heels[np.argmax(a)]
-                        sample = simulations.analytic.run(hull, simulations.Params(x))
-                        mx = (x, sample.righting_moment_heel())
-                        update(mx[0], sample)
-                        adjust_budgets(budgets, k, sample.cost)
+            diminishing_stability_estimate = X_heels[np.argmax(mu_r)]
+
+            # Temporary plotting for visualisation
+            plt.plot(X_heels, mu_r[:,0], label="μ")
+            plt.fill_between(
+                X_heels,
+                mu_r[:,0] - varSigma_r[:,0],
+                mu_r[:,0] + varSigma_r[:,0],
+                alpha=0.3,
+                label="μ ± σ"
+            )
+            plt.show()
+            
+            k = ""
+            r = np.random.random() * self._tot_mut # For selecting acquisition func            
+            s = 0
+            for k2 in self._weights_mut.keys():
+                s += self._weights_mut[k2]
+                if s > r:
+                    k = k2
+                    break
+
+            # TODO: WORK OUT HOW SURE EACH ACQUISITION FUNCTION IS ON ITS RESULT (to optimise by terminating early)
+            match k:
+                case "diminishing_stability":
+                    print("Sampling for: DIMINISHING STABILITY")
+                    a = a_EI_max(mx[1], X_heels, mu_r, varSigma_r)
+                    x = X_heels[np.argmax(a)]
+                    sample = simulations.analytic.run(hull, simulations.Params(x))
+                    mx = (x, sample.righting_moment_heel())
+                    update(mx[0], sample)
+                    adjust_budgets(budgets, k, sample.cost)
                             
-                    case "tipping_point" if self._weights_mut[k][0] <= r < self._weights_mut[k][1]:
-                        a = a_SC(mx[0], X_heels, mu_r, varSigma_r)
-                        x = X_heels[np.argmax(a)]
-                        sample = simulations.analytic.run(hull, simulations.Params(x))
-                        y = sample.righting_moment_heel()
-                        update(x, sample)
-                        adjust_budgets(budgets, k, sample.cost)
+                case "tipping_point":
+                    print("Sampling for: TIPPING POINT")
+                    # Look for roots only exceeding our estimate of diminishing stability location
+                    # TODO: More principled proabilistic ways to determine root estimate and diminishing stability estimates.
+                    a = a_SC(diminishing_stability_estimate, X_heels, mu_r, varSigma_r)
+                    x = X_heels[np.argmax(a)]
+                    sample = simulations.analytic.run(hull, simulations.Params(x))
+                    y = sample.righting_moment_heel()
+                    update(x, sample)
+                    adjust_budgets(budgets, k, sample.cost)
                             
-                    case "overall_stability" | "righting_energy" | "overall_buoyancy"\
-                         if self._weights_mut[k][0] <= r < self._weights_mut[k][1]:
-                        bounds = (0,0)
-                        moments = True
-                        match k:
-                            case "overall_stability": bounds = (0, root_estimate)
-                            case "righting_energy": bounds = (root_estimate, np.pi)
-                            case "overall_buoyancy":
-                                moments = False
-                                bounds = (0, np.pi)
-                        a = a_INT(bounds, X_heels, mu_r if moments else mu_b, varSigma_r if moments else varSigma_b)
-                        x = X_heels[argmax(a)]
-                        sample = simulations.analytic.run(hull, simulations.Params(x))
-                        update(x, sample)
-                        adjust_budgets(budgets, k, sample.cost)
+                case "overall_stability" | "righting_energy" | "overall_buoyancy":
+                    print("Sampling for: OVERALL STABILITY / RIGHTING ENERGY / OVERALL BUOYANCY")
+                    bounds = (0,0)
+                    moments = True
+                    match k:
+                        case "overall_stability": bounds = (0, root_estimate)
+                        case "righting_energy": bounds = (root_estimate, np.pi)
+                        case "overall_buoyancy":
+                            moments = False
+                            bounds = (0, np.pi)
+                    a = a_INT(bounds, X_heels, mu_r if moments else mu_b, varSigma_r if moments else varSigma_b)
+                    x = X_heels[argmax(a)]
+                    sample = simulations.analytic.run(hull, simulations.Params(x))
+                    update(x, sample)
+                    adjust_budgets(budgets, k, sample.cost)
                             
-                    case "initial_stability":
-                        x = X_heels[1]
-                        initial_stability = mu_r[x][0] if varSigma_r[1][0] == 0 else \
-                            simulations.analytic.run(hull, simulations.Params(x)).righting_moment_heel()
-                        adjust_budgets(budgets, k, budgets[k])
+                case "initial_stability":
+                    x = X_heels[1]
+                    initial_stability = mu_r[x][0] if varSigma_r[1][0] == 0 else \
+                        simulations.analytic.run(hull, simulations.Params(x)).righting_moment_heel()
+                    adjust_budgets(budgets, k, budgets[k])
                             
-                    case "initial_buoyancy":
-                        x = 0
-                        initial_buoyancy = mu_b[x][0] if varSigma_b[1][0] == 0 else \
-                            simulations.analytic.run(hull, simulations.Params(x)).reserve_buoyancy
-                        adjust_budgets(budgets, k, budgets[k])
+                case "initial_buoyancy":
+                    x = 0
+                    initial_buoyancy = mu_b[x][0] if varSigma_b[1][0] == 0 else \
+                        simulations.analytic.run(hull, simulations.Params(x)).reserve_buoyancy
+                    adjust_budgets(budgets, k, budgets[k])
 
         # I use root_estimate here because, root may be wildly inaccurate for low budgets or when tipping point is not a priority
         overall_stability = sum(mu_r[np.where(X_heels < root_estimate)][:,0])*X_heels[1]
