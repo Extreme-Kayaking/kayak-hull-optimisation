@@ -34,7 +34,7 @@ class GaussianProcessSurrogate:
         input_dim = X.shape[1]
         
         self.X_train = X
-        self.y_train = y    
+        self.y_train = y
 
         if self.k_strat:
             kernel = self.k_strat.build(input_dim, column_order)

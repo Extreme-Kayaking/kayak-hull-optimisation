@@ -42,8 +42,10 @@ def update_gp(
     """
     try:
         # Exactly the logic from the loop (re-fitting with the new total set)
-        X_total = np.vstack([model.X_train, X_new_total])
-        y_total = np.vstack([model.y_train, y_new_total])
+
+        X_total = np.vstack([model.X_train, X_new_total]) if model.X_train is not None else X_new_total
+        y_total = np.vstack([model.y_train, y_new_total]) if model.y_train is not None else y_new_total
+        print(f"Fitting on {len(X_total)} samples")
         model.fit(X_total, y_total, column_order)
         
         if X_test is not None and y_test is not None:
