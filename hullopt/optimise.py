@@ -12,6 +12,34 @@ from hullopt.hull.hull import Hull
 from hullopt.hull.constraints import Constraints
 import hullopt
 
+
+def hull_constraints(trial):
+    """
+    This is to avoid check_hull failing too much.
+    """
+
+    l = trial.params.get("length", 3.0)
+    b = trial.params.get("beam", 0.6)
+    d = trial.params.get("depth", 0.3)
+    rb = trial.params.get("rocker_bow", 0.2)
+    rs = trial.params.get("rocker_stern", 0.2)
+    violations = []
+    l_b_ratio = l / b
+    violations.append(3.0 - l_b_ratio)  
+    violations.append(l_b_ratio - 7.5)  
+
+    # Ratio: Beam to Depth (1.5 to 3.0)
+    b_d_ratio = b / d
+    violations.append(1.5 - b_d_ratio)  
+    violations.append(b_d_ratio - 3.0) 
+
+
+    violations.append(rs - rb)     
+
+    violations.append(abs(rb - rs) - 0.05)
+
+    return violations
+
 best_score = float('-inf')
 best_dic = {}
 
@@ -88,8 +116,14 @@ def optimise(F, Constraint: Constraints, time=1) -> Params:
             return float('-inf')
         
     optuna.logging.set_verbosity(optuna.logging.WARNING) 
+
+    sampler = optuna.samplers.TPESampler(
+        constraints_func=hull_constraints,
+        multivariate=True
+
+    )
     
-    study = optuna.create_study(direction="maximize")
+    study = optuna.create_study(direction="maximize", sampler=sampler)
     
     print("Starting Bayesian Optimization...")
     print(f"Time limit: {time} minutes")
