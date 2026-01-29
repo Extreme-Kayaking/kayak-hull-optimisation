@@ -32,8 +32,8 @@ def a_INT(bounds, Xs, mu, varSigma):
     return np.asarray([varSigma[i][0] if bounds[0] <= x < bounds[1] else 0 for i, x in enumerate(Xs)])
 
 class Aggregator:
-    def __init__(self, user_weights, gp_righting: GaussianProcessSurrogate, gp_buoyancy: GaussianProcessSurrogate, column_order, plotting):
-        self.plotting = plotting
+    def __init__(self, user_weights, gp_righting: GaussianProcessSurrogate, gp_buoyancy: GaussianProcessSurrogate, column_order, plot_n_steps):
+        self.plot_n_steps = plot_n_steps
         self.weights = {}
         tot = 0
         for k in user_weights.keys():
@@ -178,7 +178,9 @@ class Aggregator:
             plt.ylim(1.1*min(mu_r[:,0] - 2*np.sqrt(varSigma_r[:,0])), 1.1*max(mu_r[:,0] + 2*np.sqrt(varSigma_r[:,0])))
             plt.title(f"Acquiring for: {k}")
             plt.legend()
-            if self.plotting: plt.show()
+            if self.plot_n_steps > 0:
+                plt.show()
+                self.plot_n_steps -= 1
 
         # I use root_estimate here because, root may be wildly inaccurate for low budgets or when tipping point is not a priority
         overall_stability = sum(mu_r[np.where(X_heels < root_estimate)][:,0]) * (X_heels[1] / (2*np.pi))
