@@ -10,22 +10,26 @@ from copy import deepcopy
 
 # Expected Improvement to find the maximum
 def a_EI_max(f_star, Xs, mu, varSigma):
-    alpha = np.zeros(mu[0].shape)
-    for i in range(0,Xs.shape[0]):
-        alpha[i] = (mu[i][0] - f_star)*norm.cdf(f_star,mu[i][0],np.sqrt(varSigma[i][0])) + varSigma[i][0]*norm.pdf(f_star,mu[i][0],np.sqrt(varSigma[i][0]))
-    return np.asarray(alpha)
 
+    sigma = np.sqrt(varSigma)
+    alpha = np.zeros_like(mu)
+
+    nonzero = sigma > 0
+    z = (mu[nonzero] - f_star) / sigma[nonzero]
+    alpha[nonzero] = ((mu[nonzero] - f_star) * norm.cdf(z)
+                   + sigma[nonzero] * norm.pdf(z))
+    return alpha
 # 'Sign-change' acquisition to find roots
 # SC(x) = p(y = 0) i.e. for y ~ N(mu(x), varSigma(x))
 # Only consider if LARGER than point of diminishing stability (maximum)
 def a_SC(dim, Xs, mu, varSigma):
-    return np.asarray([norm.pdf(0, m[0], s[0]).item() if x > dim else 0 for (x, (m, s)) in zip(Xs, zip(mu, varSigma))])
+    return np.asarray([norm.pdf(0, m[0], s[0]).item() if x > dim else 0 for (x, (m, s)) in zip(Xs, zip(mu, np.sqrt(varSigma)))])
 
 # Integrals
 # Maximum variance sampling (up to point)
 # TODO: Explore Quadrature acquisition functions
 def a_INT(bounds, Xs, mu, varSigma):
-    return np.asarray([varSigma[x][0] if bounds[0] <= x < bounds[1] else 0 for x in Xs])
+    return np.asarray([varSigma[i][0] if bounds[0] <= x < bounds[1] else 0 for i, x in enumerate(Xs)])
 
 class Aggregator:
     def __init__(self, user_weights, gp_righting: GaussianProcessSurrogate, gp_buoyancy: GaussianProcessSurrogate, column_order, plotting):
