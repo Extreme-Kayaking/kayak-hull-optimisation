@@ -173,7 +173,7 @@ class GP_Result:
 user_weights = WeightSelector(GP_Result).run()
 time = user_weights["time"]
 del user_weights["time"]
-aggregator = Aggregator(user_weights, gp_righting, gp_buoyancy, column_order, plot_n_steps=0)
+aggregator = Aggregator(user_weights, gp_righting, gp_buoyancy, column_order, plot_n_steps=6)
 f = aggregator.f
 best_params = optimise(f, Constraints(), time=time)
 print("Optimised!! Now Saving")

@@ -6,7 +6,7 @@ import numpy as np
 # Normalisation constants
 weight_normalisers = {
     "overall_stability": 24.1420,
-    "righting_energy": 24.1420,
+    "righting_energy": 55.3695,
     "initial_stability": 2769.4008,
     "diminishing_stability": 184.5134,
     "tipping_point": 1.4041,
